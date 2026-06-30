@@ -82,7 +82,7 @@ function estimateFairValue(price: number): number {
 function detectRiskFlags(raw: MarketplaceRawListing): string[] {
   const flags: string[] = [];
   const desc = (raw.description ?? "").toLowerCase();
-  if (!raw.image) flags.push("no photo");
+  if (!raw.image && !raw.images?.length) flags.push("no photo");
   if ((raw.description ?? "").trim().length < 15) flags.push("very short description");
   if (/crash|crack|bent|broken|does not|doesn't|not work|issue|repair/.test(desc)) {
     flags.push("possible condition issue mentioned");
