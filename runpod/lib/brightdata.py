@@ -157,7 +157,7 @@ def fetch_snapshot(snapshot_id: str, token: str) -> Optional[list[Listing]]:
     """Poll a snapshot. Returns None while still running, listings when ready."""
     resp = requests.get(
         f"{BD_BASE}/datasets/v3/snapshot/{snapshot_id}",
-        headers=_headers(token),
+        headers={"Authorization": f"Bearer {token}"},
         params={"format": "json"},
         timeout=60,
     )
