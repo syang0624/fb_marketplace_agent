@@ -1,7 +1,7 @@
 """Typed, stdlib-only data model shared across endpoints, orchestrator, and tests."""
 from __future__ import annotations
 
-from dataclasses import dataclass, field, asdict
+from dataclasses import dataclass, field, fields, is_dataclass
 from typing import Any, Optional
 
 
@@ -65,10 +65,9 @@ def listing_from_dict(d: dict[str, Any]) -> Listing:
 
 
 def to_jsonable(obj: Any) -> Any:
-    """Recursively convert dataclasses to plain JSON-serializable dicts/lists."""
-    from dataclasses import is_dataclass
-    if is_dataclass(obj):
-        return {k: to_jsonable(v) for k, v in asdict(obj).items()}
+    """Recursively convert dataclasses/lists/dicts to JSON-serializable values."""
+    if is_dataclass(obj) and not isinstance(obj, type):
+        return {f.name: to_jsonable(getattr(obj, f.name)) for f in fields(obj)}
     if isinstance(obj, list):
         return [to_jsonable(v) for v in obj]
     if isinstance(obj, dict):
