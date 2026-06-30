@@ -1,5 +1,23 @@
 import runpod.lib.brightdata as bd
 
+# A minimal Facebook-Marketplace-style page: the listing data lives in JSON
+# embedded in a <script> tag, wrapped the way Facebook nests it.
+SAMPLE_HTML = """
+<html><head>
+<script type="application/json">{"require":[["ScheduledServerJS"]]}</script>
+<script type="application/json">
+{"data":{"viewer":{"marketplace_product_details_page":{"target":{
+  "id":"123","marketplace_listing_title":"iPhone 13 128GB Blue",
+  "listing_price":{"amount":"380","formatted_amount":"$380"},
+  "redacted_description":{"text":"Small scratch on the back."},
+  "location_text":{"text":"San Francisco, CA"},
+  "primary_listing_photo":{"image":{"uri":"https://img/1.jpg"}},
+  "marketplace_listing_seller":{"name":"Alex M."}
+}}}}}
+</script>
+</head><body></body></html>
+"""
+
 
 def test_scrape_listings_without_token_uses_fixtures():
     out = bd.scrape_listings(["https://fb.com/x"], token=None)
@@ -7,68 +25,69 @@ def test_scrape_listings_without_token_uses_fixtures():
     assert any("iphone" in (l.title or "").lower() for l in out)
 
 
-def test_scrape_listings_with_token_calls_sync_and_normalizes(monkeypatch):
+def test_extract_listings_from_html_finds_nested_node():
+    records = bd.extract_listings_from_html(SAMPLE_HTML)
+    assert len(records) == 1
+    assert records[0]["marketplace_listing_title"] == "iPhone 13 128GB Blue"
+
+
+def test_scrape_listings_with_token_unlocks_and_normalizes(monkeypatch):
     captured = {}
 
     class FakeResp:
         status_code = 200
+        text = SAMPLE_HTML
         def raise_for_status(self): pass
-        def json(self):
-            return [{"url": "u", "name": "iPhone 13", "final_price": 300, "images": ["i"]}]
 
-    def fake_post(url, headers=None, json=None, params=None, timeout=None):
+    def fake_post(url, headers=None, json=None, timeout=None):
         captured["url"] = url
         captured["auth"] = headers.get("Authorization")
+        captured["zone"] = (json or {}).get("zone")
+        captured["target"] = (json or {}).get("url")
         return FakeResp()
 
     monkeypatch.setattr(bd.requests, "post", fake_post)
-    out = bd.scrape_listings(["https://fb.com/x"], token="TKN")
+    out = bd.scrape_listings(["https://www.facebook.com/marketplace/item/123"], token="TKN")
     assert captured["auth"] == "Bearer TKN"
-    assert out[0].title == "iPhone 13"
-    assert out[0].price == 300.0
+    assert captured["url"] == f"{bd.BD_BASE}/request"
+    assert captured["zone"] == bd.WEB_UNLOCKER_ZONE
+    assert captured["target"] == "https://www.facebook.com/marketplace/item/123"
+    assert len(out) == 1
+    listing = out[0]
+    assert listing.title == "iPhone 13 128GB Blue"
+    assert listing.price == 380.0
+    assert listing.seller == "Alex M."
+    assert listing.description == "Small scratch on the back."
+    assert listing.location == "San Francisco, CA"
+    assert listing.images == ["https://img/1.jpg"]
+    # source url is backfilled when the embedded node lacks one
+    assert listing.url == "https://www.facebook.com/marketplace/item/123"
+
+
+def test_search_listings_without_token_uses_fixtures():
+    out = bd.search_listings("iPhone 13", "San Francisco", 2, token=None)
+    assert len(out) == 2
+
+
+def test_search_listings_with_token_unlocks_search_url(monkeypatch):
+    captured = {}
+
+    class FakeResp:
+        status_code = 200
+        text = SAMPLE_HTML
+        def raise_for_status(self): pass
+
+    def fake_post(url, headers=None, json=None, timeout=None):
+        captured["target"] = (json or {}).get("url")
+        return FakeResp()
+
+    monkeypatch.setattr(bd.requests, "post", fake_post)
+    out = bd.search_listings("iPhone 13", "San Francisco", 10, token="TKN")
+    assert "facebook.com/marketplace/search" in captured["target"]
+    assert "query=iPhone" in captured["target"]
+    assert out[0].title == "iPhone 13 128GB Blue"
 
 
 def test_load_fixture_listings_shape():
     out = bd.load_fixture_listings()
     assert all(l.url for l in out)
-
-
-def test_trigger_search_returns_snapshot_id(monkeypatch):
-    captured = {}
-
-    class FakeResp:
-        status_code = 200
-        def raise_for_status(self): pass
-        def json(self): return {"snapshot_id": "snap123"}
-
-    def fake_post(url, headers=None, json=None, params=None, timeout=None):
-        captured["auth"] = headers.get("Authorization")
-        captured["dataset"] = (params or {}).get("dataset_id")
-        return FakeResp()
-
-    monkeypatch.setattr(bd.requests, "post", fake_post)
-    snap = bd.trigger_search("iPhone 13", "San Francisco", 10, token="TKN")
-    assert snap == "snap123"
-    assert captured["auth"] == "Bearer TKN"
-    assert captured["dataset"] == bd.DATASET_ID
-
-
-def test_fetch_snapshot_pending_returns_none(monkeypatch):
-    class FakeResp:
-        status_code = 202
-        def raise_for_status(self): pass
-        def json(self): return {}
-
-    monkeypatch.setattr(bd.requests, "get", lambda *a, **k: FakeResp())
-    assert bd.fetch_snapshot("snap123", token="TKN") is None
-
-
-def test_fetch_snapshot_ready_returns_listings(monkeypatch):
-    class FakeResp:
-        status_code = 200
-        def raise_for_status(self): pass
-        def json(self): return [{"url": "u", "name": "iPhone 13", "final_price": 300, "images": ["i"]}]
-
-    monkeypatch.setattr(bd.requests, "get", lambda *a, **k: FakeResp())
-    out = bd.fetch_snapshot("snap123", token="TKN")
-    assert out is not None and out[0].title == "iPhone 13" and out[0].price == 300.0
