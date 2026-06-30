@@ -9,6 +9,7 @@ import { SearchProgress } from "@/components/SearchProgress";
 import { fallbackListings, getSellerPersona } from "@/lib/data";
 import { findTopDeals } from "@/lib/searchAgent";
 import { BuyerProfile, Negotiation, RankedDeal } from "@/lib/types";
+import { checkForScam, shouldAutoStop } from "@/lib/scamDetection";
 
 type Step = "onboarding" | "searching" | "deals" | "negotiate" | "review";
 
@@ -28,12 +29,11 @@ function deriveMeetDetails(profile: BuyerProfile | null): {
   meetPlace: string;
 } {
   if (!profile) {
-    return { meetTime: "this weekend", meetPlace: "a public meetup spot" };
+    return { meetTime: "this weekend", meetPlace: "Powell Station, SF" };
   }
   const firstWindow = profile.meetWindows?.split(",")[0]?.trim();
   const meetTime = firstWindow && firstWindow.length > 0 ? firstWindow : "this weekend";
-  const place = profile.location?.trim();
-  const meetPlace = place ? `Public meetup near ${place}` : "a public meetup spot";
+  const meetPlace = "Powell Station, SF";
   return { meetTime, meetPlace };
 }
 
@@ -52,7 +52,7 @@ export default function HomePage() {
   useEffect(() => {
     if (step !== "negotiate" || negotiations.length === 0) return;
     const allDone = negotiations.every(
-      (n) => n.stage === "final_offer" || n.stage === "withdrawn"
+      (n) => n.stage === "final_offer" || n.stage === "withdrawn" || n.stage === "scam_detected"
     );
     if (allDone) {
       setTimeout(() => setStep("review"), 1000);
@@ -167,6 +167,7 @@ export default function HomePage() {
     while (
       current.stage !== "final_offer" &&
       current.stage !== "withdrawn" &&
+      current.stage !== "scam_detected" &&
       turns < maxTurns &&
       !current.userTookOver
     ) {
@@ -214,7 +215,7 @@ export default function HomePage() {
           prev.map((n) => (n.sellerId === current.sellerId ? { ...current } : n))
         );
 
-        if (current.stage === "withdrawn" || current.stage === "final_offer") break;
+        if (current.stage === "withdrawn" || current.stage === "final_offer" || current.stage === "scam_detected") break;
 
         // Delay for realism
         await new Promise((r) => setTimeout(r, 1500 + Math.random() * 1500));
@@ -252,6 +253,40 @@ export default function HomePage() {
         setNegotiations((prev) =>
           prev.map((n) => (n.sellerId === current.sellerId ? { ...current } : n))
         );
+
+        // Scam check after every seller reply
+        const scamAlert = await checkForScam(current);
+        if (scamAlert) {
+          current.scamAlert = scamAlert;
+          if (shouldAutoStop(scamAlert)) {
+            current.stage = "scam_detected";
+            current.agentReasoning = scamAlert.summary;
+            current.messages = [
+              ...current.messages,
+              {
+                role: "agent_note",
+                content: `Scam detected: ${scamAlert.summary}`,
+                timestamp: Date.now()
+              }
+            ];
+            setNegotiations((prev) =>
+              prev.map((n) => (n.sellerId === current.sellerId ? { ...current } : n))
+            );
+            break;
+          }
+          // Medium/low: warn but continue
+          current.messages = [
+            ...current.messages,
+            {
+              role: "agent_note",
+              content: `Caution: ${scamAlert.summary}`,
+              timestamp: Date.now()
+            }
+          ];
+          setNegotiations((prev) =>
+            prev.map((n) => (n.sellerId === current.sellerId ? { ...current } : n))
+          );
+        }
 
         await new Promise((r) => setTimeout(r, 1000));
       } catch {

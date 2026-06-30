@@ -1,4 +1,4 @@
-// PedalBot v3 — proxy to the ScrapeCreators Marketplace Location Search.
+// MRI v3 — proxy to the ScrapeCreators Marketplace Location Search.
 // Turns a location string into coordinates. Falls back to San Francisco coords
 // if the key is missing or the upstream call fails, so search always proceeds.
 

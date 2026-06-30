@@ -91,13 +91,49 @@ export function ChatDrawer({
           <div ref={bottomRef} />
         </div>
 
+        {/* Scam alert banner in chat */}
+        {negotiation.scamAlert && (
+          <div className={`border-t px-6 py-4 ${
+            negotiation.scamAlert.severity === "high"
+              ? "border-red-200 bg-red-50"
+              : negotiation.scamAlert.severity === "medium"
+                ? "border-amber-200 bg-amber-50"
+                : "border-yellow-200 bg-yellow-50"
+          }`}>
+            <div className="flex items-start gap-2">
+              <span className="text-base leading-none">&#9888;</span>
+              <div className="text-xs">
+                <p className={`font-semibold ${
+                  negotiation.scamAlert.severity === "high" ? "text-red-800" : "text-amber-800"
+                }`}>
+                  {negotiation.scamAlert.severity === "high" ? "Scam Detected" : "Warning"}
+                </p>
+                <p className={`mt-0.5 leading-relaxed ${
+                  negotiation.scamAlert.severity === "high" ? "text-red-700" : "text-amber-700"
+                }`}>
+                  {negotiation.scamAlert.summary}
+                </p>
+                <ul className={`mt-1.5 space-y-0.5 ${
+                  negotiation.scamAlert.severity === "high" ? "text-red-600" : "text-amber-600"
+                }`}>
+                  {negotiation.scamAlert.flags.map((flag, i) => (
+                    <li key={i}>&#8226; {flag}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Control bar */}
-        {readOnly ? (
+        {readOnly || negotiation.stage === "scam_detected" ? (
           <div className="border-t border-line px-6 py-4">
             <p className="text-center text-xs text-ink/40">
-              {negotiation.stage === "withdrawn"
-                ? "MRI walked away from this negotiation."
-                : "Negotiation complete — viewing chat history."}
+              {negotiation.stage === "scam_detected"
+                ? "MRI stopped this negotiation due to scam indicators."
+                : negotiation.stage === "withdrawn"
+                  ? "MRI walked away from this negotiation."
+                  : "Negotiation complete — viewing chat history."}
             </p>
           </div>
         ) : (

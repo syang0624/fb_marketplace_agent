@@ -1,4 +1,4 @@
-// PedalBot v3 — seller persona templates + fallback seeded listings.
+// MRI v3 — seller persona templates + fallback seeded listings.
 //
 // v3 does NOT use pre-seeded listings as the main path. They exist only as a
 // fallback when the ScrapeCreators API fails during the demo, and the UI labels
@@ -30,13 +30,13 @@ export const personaTemplates: PersonaTemplate[] = [
     style: "firm on price but willing to include extras",
     concessionPattern: "firm_price",
     hiddenInfo:
-      "can include a saddle bag and spare tubes if buyer does not push too hard on price",
+      "can include a case and extra charging cable if buyer does not push too hard on price",
   },
   {
     name: "Dave",
     style: "brief and slightly evasive",
     concessionPattern: "condition_issue",
-    hiddenInfo: "the bike had a fork replacement after a crash, revealed only when asked directly",
+    hiddenInfo: "the phone had a screen replacement after a drop, revealed only when asked directly",
   },
   {
     name: "Jen",
@@ -45,6 +45,14 @@ export const personaTemplates: PersonaTemplate[] = [
     hiddenInfo: "available only on Sunday afternoon",
   },
 ];
+
+// Scammy persona — used to demo scam detection. Triggers pattern-based flags.
+export const scamPersonaTemplate: PersonaTemplate = {
+  name: "Rick",
+  style: "pushy and evasive, tries to move off-platform and demands upfront payment",
+  concessionPattern: "easy_drop",
+  hiddenInfo: "will ask buyer to pay via Venmo before meeting and refuses inspection",
+};
 
 // Price floor multiplier per concession pattern — how low this seller will go.
 const FLOOR_MULTIPLIER: Record<SellerPersona["concessionPattern"], number> = {
@@ -55,9 +63,12 @@ const FLOOR_MULTIPLIER: Record<SellerPersona["concessionPattern"], number> = {
 };
 
 // Build a deterministic SellerPersona from a listing using rotating templates.
-// `index` keeps the three demo lanes distinct (easy / firm / condition issue).
+// `index` keeps the three demo lanes distinct (easy / firm / scam detected).
+// Index 2 always gets the scam persona so the demo showcases scam detection.
 export function personaFromTemplate(listing: Listing, index = 0): SellerPersona {
-  const template = personaTemplates[index % personaTemplates.length];
+  const template = index === 2
+    ? scamPersonaTemplate
+    : personaTemplates[index % personaTemplates.length];
   const floor = Math.max(Math.round(listing.price * FLOOR_MULTIPLIER[template.concessionPattern]), 5);
   return {
     name: template.name,
@@ -77,7 +88,7 @@ export function getSellerPersona(listing: Listing, index?: number): SellerPerson
 }
 
 // --- Fallback seeded listings ----------------------------------------------
-// Real bike data captured from Marketplace, reshaped into the v3 Listing model.
+// iPhone listings for the demo, reshaped into the v3 Listing model.
 // Marked source "seeded_fallback" so the UI can badge them clearly.
 
 function seeded(
@@ -96,100 +107,100 @@ export const fallbackListings: Listing[] = [
   seeded({
     id: "fallback-1",
     url: "https://www.facebook.com/marketplace/item/949813030755462/",
-    title: "Comfortable Step-through Women's Bike",
-    price: 65,
-    fairValue: 90,
-    condition: "Good",
-    specs: "Step-through cruiser frame, geared, upright bars, comfort saddle, size small (~5'5\")",
+    title: "iPhone 15 Pro 128GB Natural Titanium",
+    price: 750,
+    fairValue: 850,
+    condition: "Used - Like New",
+    specs: "iPhone 15 Pro, 128GB, Natural Titanium, A17 Pro chip, 48MP camera, USB-C, unlocked",
     image:
-      "https://scontent-sjc3-1.xx.fbcdn.net/v/t39.84726-6/660845486_1975701266359431_7571238812037129340_n.jpg",
+      "https://store.storeimages.cdn-apple.com/4982/as-images.apple.com/is/iphone-15-pro-finish-select-202309-6-1inch-naturaltitanium",
     sellerName: "Marketplace Seller",
     distance: "6 mi away",
     location: "Oakland, CA",
     listingDateText: "3 days ago",
     availabilityText: "available",
     description:
-      "Comfortable, easy-to-ride step-through cruiser with gears — good condition, just needs a little oil. Step-through frame, upright handlebars, cushioned saddle, kickstand. Brakes and gears work well. Local pickup Oakland.",
+      "iPhone 15 Pro 128GB in Natural Titanium. Unlocked, works on all carriers. Always had a case and screen protector. Battery health 96%. Comes with original box and USB-C cable. Local pickup Oakland.",
     source: "seeded_fallback",
     riskFlags: [],
   }),
   seeded({
     id: "fallback-2",
     url: "https://www.facebook.com/marketplace/item/1503580751149128/",
-    title: "REI Novara X-R Mountain / Hybrid Bike",
-    price: 95,
-    fairValue: 130,
-    condition: "Good (drivetrain issue)",
-    specs: "Small frame (~5'4\"), hybrid/mountain geometry",
+    title: "iPhone 14 Pro Max 256GB Deep Purple",
+    price: 620,
+    fairValue: 700,
+    condition: "Good (minor scratch)",
+    specs: "iPhone 14 Pro Max, 256GB, Deep Purple, A16 Bionic, 48MP camera, Lightning, unlocked",
     image:
-      "https://scontent-sjc3-1.xx.fbcdn.net/v/t39.84726-6/654344836_1059043643951958_4443841547276345281_n.jpg",
+      "https://store.storeimages.cdn-apple.com/4982/as-images.apple.com/is/iphone-14-pro-finish-select-202209-6-7inch-deeppurple",
     sellerName: "Marketplace Seller",
     distance: "9 mi away",
     location: "San Francisco, CA",
     listingDateText: "5 days ago",
     availabilityText: "available",
     description:
-      "Small frame bike that fits somebody around 5'4\". Good condition except it does not power the back wheel when pedaling — cause unknown.",
+      "iPhone 14 Pro Max 256GB Deep Purple. Unlocked. Small scratch on the back glass, barely visible with a case. Screen is perfect. Battery health 89%. Charger not included.",
     source: "seeded_fallback",
-    riskFlags: ["drivetrain issue: rear wheel not powered", "cause of fault unknown"],
+    riskFlags: ["minor scratch on back glass", "battery health 89%"],
   }),
   seeded({
     id: "fallback-3",
     url: "https://www.facebook.com/marketplace/item/2002892227106263/",
-    title: "Trek 2300 Small Road Bike, 51-52 cm",
-    price: 100,
-    fairValue: 220,
+    title: "iPhone 15 Pro Max 256GB Black Titanium",
+    price: 850,
+    fairValue: 950,
     condition: "Used - Fair",
-    specs: "Trek 2300 ZR 9000 alloy, 51-52cm, 27-speed Shimano Ultegra, Bontrager carbon fork, 19.6 lbs",
+    specs: "iPhone 15 Pro Max, 256GB, Black Titanium, A17 Pro chip, 48MP camera, USB-C, unlocked",
     image:
-      "https://scontent-sjc6-1.xx.fbcdn.net/v/t39.84726-6/662076950_876523125417865_8160940716534133978_n.jpg",
+      "https://store.storeimages.cdn-apple.com/4982/as-images.apple.com/is/iphone-15-pro-max-finish-select-202309-6-7inch-blacktitanium",
     sellerName: "Marketplace Seller",
     distance: "12 mi away",
     location: "San Jose, CA",
     listingDateText: "2 days ago",
     availabilityText: "available",
     description:
-      "Trek 2300 ZR 9000 Custom Alloy road bike, 51-52cm, made in USA, 27 speed Shimano Ultegra. Cash only. No price change.",
+      "iPhone 15 Pro Max 256GB Black Titanium. Unlocked. Screen replaced at Apple Store (receipt available). Cash only. No price change.",
     source: "seeded_fallback",
-    riskFlags: ["seller states no price change"],
+    riskFlags: ["seller states no price change", "screen was replaced"],
   }),
   seeded({
     id: "fallback-4",
     url: "https://www.facebook.com/marketplace/item/819371031217917/",
-    title: "Schwinn Fastback Aluminum Road Bike",
-    price: 225,
-    fairValue: 320,
+    title: "iPhone 15 128GB Blue",
+    price: 520,
+    fairValue: 600,
     condition: "Used - Good",
-    specs:
-      "7005 aluminum road frame, 700c wheels, drop bars, Shimano triple drivetrain, SPD pedals included",
+    specs: "iPhone 15, 128GB, Blue, A16 Bionic, 48MP camera, USB-C, unlocked",
     image:
-      "https://scontent-sjc3-1.xx.fbcdn.net/v/t39.84726-6/662308565_2299508373908319_1969563371482225677_n.jpg",
+      "https://store.storeimages.cdn-apple.com/4982/as-images.apple.com/is/iphone-15-finish-select-202309-6-1inch-blue",
     sellerName: "Marketplace Seller",
     distance: "8 mi away",
     location: "San Francisco, CA",
     listingDateText: "1 day ago",
     availabilityText: "available",
     description:
-      "Schwinn Fastback road bike in good working condition. Lightweight aluminum, road geometry, 700c wheels, drop bars with upgraded tape, Shimano triple crankset, SPD pedals included. Recently inspected, shifts and brakes work. $225 OBO.",
+      "iPhone 15 128GB Blue in good working condition. Unlocked, battery health 93%. Comes with a MagSafe case and USB-C cable. No scratches on screen. $520 OBO.",
     source: "seeded_fallback",
     riskFlags: [],
   }),
   seeded({
     id: "fallback-5",
     url: "https://www.facebook.com/marketplace/item/1749614599345484/",
-    title: "Factor One Road Bike",
-    price: 3800,
-    fairValue: 5200,
-    condition: "Used - like new",
-    specs: "2018 Factor One, full Dura-Ace Di2, ENVE wheelset, rim brakes, 58cm",
+    title: "iPhone 16 Pro Max 512GB Desert Titanium",
+    price: 1100,
+    fairValue: 1250,
+    condition: "Used - Like New",
+    specs: "iPhone 16 Pro Max, 512GB, Desert Titanium, A18 Pro chip, 48MP camera, USB-C, unlocked",
     image:
-      "https://scontent-sjc3-1.xx.fbcdn.net/v/t39.84726-6/637266767_3039975079533772_1084340314368125365_n.jpg",
+      "https://store.storeimages.cdn-apple.com/4982/as-images.apple.com/is/iphone-16-pro-max-finish-select-202409-6-9inch-deserttitanium",
     sellerName: "Marketplace Seller",
     distance: "15 mi away",
     location: "San Francisco, CA",
     listingDateText: "1 week ago",
     availabilityText: "available",
-    description: "2018 Factor One. Full Dura Ace Di2. ENVE wheelset. Rim brakes. Size 58cm.",
+    description:
+      "iPhone 16 Pro Max 512GB Desert Titanium. Mint condition, barely used. Unlocked. Battery health 100%. Includes original box, cable, and AppleCare+ until March 2027.",
     source: "seeded_fallback",
     riskFlags: [],
   }),

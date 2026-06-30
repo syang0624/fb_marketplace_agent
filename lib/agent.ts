@@ -1,4 +1,4 @@
-// PedalBot v3 — autonomous simulated negotiation engine.
+// MRI v3 — autonomous simulated negotiation engine.
 //
 // N11: runNegotiation async loop + startAll parallel execution
 // N12: seller persona generation from live listings (persona_from_listing)
@@ -22,6 +22,7 @@ import {
   SellerPersona,
   SellerReply,
 } from "@/lib/types";
+import { checkForScam, shouldAutoStop } from "@/lib/scamDetection";
 
 const MAX_TURNS = 8; // safety cap so a lane always reaches a terminal stage
 
@@ -144,12 +145,13 @@ function extractFinalOffer(neg: Negotiation, profile: BuyerProfile): FinalOffer 
     .join(" ")
     .toLowerCase();
   const extras: string[] = [];
-  if (/saddle bag|spare tube|pump|lock|helmet|accessor/.test(sellerText)) {
-    if (/saddle bag/.test(sellerText)) extras.push("saddle bag");
-    if (/spare tube|tubes/.test(sellerText)) extras.push("spare tubes");
-    if (/pump/.test(sellerText)) extras.push("pump");
-    if (/lock/.test(sellerText)) extras.push("lock");
-    if (/helmet/.test(sellerText)) extras.push("helmet");
+  if (/case|charger|cable|screen protector|airpods|applecare|earbuds|adapter|box/i.test(sellerText)) {
+    if (/case/i.test(sellerText)) extras.push("case");
+    if (/charger|cable/i.test(sellerText)) extras.push("charging cable");
+    if (/screen protector/i.test(sellerText)) extras.push("screen protector");
+    if (/airpods|earbuds/i.test(sellerText)) extras.push("earbuds");
+    if (/applecare/i.test(sellerText)) extras.push("AppleCare+");
+    if (/original box|box/i.test(sellerText)) extras.push("original box");
   }
 
   return {
@@ -158,7 +160,7 @@ function extractFinalOffer(neg: Negotiation, profile: BuyerProfile): FinalOffer 
     bikeTitle: neg.listing.title,
     finalPrice: neg.currentPrice,
     meetTime: profile.meetWindows || "this weekend",
-    meetPlace: neg.listing.location || profile.location || "a public meetup spot",
+    meetPlace: "Powell Station, SF",
     extras,
     notes: neg.agentReasoning,
   };
@@ -174,7 +176,7 @@ async function waitForUserAction(neg: Negotiation) {
 }
 
 function isTerminal(stage: NegotiationStage) {
-  return stage === "final_offer" || stage === "withdrawn";
+  return stage === "final_offer" || stage === "withdrawn" || stage === "scam_detected";
 }
 
 export async function runNegotiation(
@@ -237,6 +239,30 @@ export async function runNegotiation(
         neg.currentPrice = reply.newPrice;
       }
       emit(neg, onUpdate);
+
+      // Scam check after every seller reply
+      const scamAlert = await checkForScam(neg);
+      if (scamAlert) {
+        neg.scamAlert = scamAlert;
+        if (shouldAutoStop(scamAlert)) {
+          neg.stage = "scam_detected";
+          neg.agentReasoning = scamAlert.summary;
+          neg.messages.push({
+            role: "agent_note",
+            content: `Scam detected: ${scamAlert.summary}`,
+            timestamp: now(),
+          });
+          emit(neg, onUpdate);
+          return;
+        }
+        // Medium/low: warn but continue
+        neg.messages.push({
+          role: "agent_note",
+          content: `Caution: ${scamAlert.summary}`,
+          timestamp: now(),
+        });
+        emit(neg, onUpdate);
+      }
     }
 
     await sleep(1000);

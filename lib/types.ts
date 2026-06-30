@@ -1,4 +1,4 @@
-// PedalBot v3 — shared type contract between the `nori` (backend) and `steven`
+// MRI v3 — shared type contract between the `nori` (backend) and `steven`
 // (frontend) branches. Agreed at Sync Point 1; breaking changes need a heads-up.
 //
 // Listing carries a few UI-compat fields (images, condition, link) alongside the
@@ -6,8 +6,8 @@
 
 // Buyer profile + negotiation authority — collected at onboarding.
 export interface BuyerProfile {
-  // Bike / search preferences
-  bikeType: string;
+  // Item / search preferences
+  bikeType: string; // legacy field name — holds the item type (e.g. "iPhone 15 Pro")
   frameSize: string;
   budgetMin: number;
   budgetMax: number;
@@ -33,7 +33,7 @@ export interface SearchPlan {
   radiusKm: number;
   minPrice?: number;
   maxPrice?: number;
-  queries: string[]; // e.g. ["gravel bike", "Specialized Diverge", "Trek Checkpoint"]
+  queries: string[]; // e.g. ["iPhone 15 Pro", "iPhone 14 Pro Max", "used iPhone"]
   includeTerms: string[]; // terms that improve relevance
   excludeTerms: string[]; // e.g. ["kids", "parts", "broken"]
   condition?: string;
@@ -104,7 +104,15 @@ export type NegotiationStage =
   | "counter_offer"
   | "logistics"
   | "final_offer"
-  | "withdrawn";
+  | "withdrawn"
+  | "scam_detected";
+
+export interface ScamAlert {
+  severity: "high" | "medium" | "low";
+  flags: string[];
+  summary: string;
+  detectedAt: number;
+}
 
 export interface SellerPersona {
   name: string;
@@ -117,7 +125,7 @@ export interface SellerPersona {
 export interface FinalOffer {
   listingId: string;
   sellerName: string;
-  bikeTitle: string;
+  bikeTitle: string; // legacy field name — holds the item title
   finalPrice: number;
   meetTime: string;
   meetPlace: string;
@@ -136,6 +144,7 @@ export interface Negotiation {
   persona: SellerPersona;
   finalOffer?: FinalOffer;
   userTookOver: boolean;
+  scamAlert?: ScamAlert;
 }
 
 // Draft message options (used by the take-over / draft UI).
@@ -158,7 +167,8 @@ export type ChatMode =
   | "seller"
   | "evaluate_offer"
   | "modify_logistics"
-  | "reopen_counter";
+  | "reopen_counter"
+  | "scam_check";
 
 export interface ChatRequest {
   mode: ChatMode;

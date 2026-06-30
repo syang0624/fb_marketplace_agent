@@ -1,4 +1,4 @@
-// PedalBot v3 — deterministic scoring helpers.
+// MRI v3 — deterministic scoring helpers.
 // The app computes the basic ordering deterministically so the demo never feels
 // random; the LLM (`rank` mode) layers explanations + suggested offers on top.
 //
@@ -85,7 +85,7 @@ export function conditionScore(listing: Listing): number {
   if (/new|excellent|like new|mint/.test(desc) || /new|excellent|mint/.test(specs)) score += 25;
   if (/good/.test(desc)) score += 10;
   if (/fair|worn|needs|issue|broken|crack|rust|does not|doesn't/.test(desc)) score -= 25;
-  if (specs.length > 40) score += 10; // detailed specs signal a real, cared-for bike
+  if (specs.length > 40) score += 10; // detailed specs signal a real, cared-for item
   if (desc.length < 15) score -= 15; // barely any description
   return clamp(score);
 }

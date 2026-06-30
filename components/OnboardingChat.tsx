@@ -30,11 +30,11 @@ function parseProfileFromText(text: string): BuyerProfile | null {
 export function OnboardingChat({ onComplete }: OnboardingChatProps) {
   const [messages, setMessages] = useState<Message[]>([
     {
-      role: "system",
+      role: "seller",
       content:
-        "I'm MRI, your buying agent. I'll search the marketplace for the best deals and negotiate for you. What are you looking for?",
-      timestamp: Date.now()
-    }
+        "Hey! I'm MRI, your buying agent. I'll find the best deals on the marketplace and negotiate for you. What are you looking for?",
+      timestamp: Date.now(),
+    },
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -48,37 +48,59 @@ export function OnboardingChat({ onComplete }: OnboardingChatProps) {
     event.preventDefault();
     if (!input.trim() || loading) return;
 
-    const buyerMessage: Message = { role: "buyer", content: input.trim(), timestamp: Date.now() };
+    const userText = input.trim();
+    const buyerMessage: Message = { role: "buyer", content: userText, timestamp: Date.now() };
     const nextMessages = [...messages, buyerMessage];
     setMessages(nextMessages);
     setInput("");
     setLoading(true);
 
     try {
-      const response = await fetch("/api/chat", {
+      // Fire API call and a minimum typing delay in parallel
+      const typingDelay = new Promise((r) => setTimeout(r, 1200 + Math.random() * 800));
+      const apiCall = fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           mode: "onboarding",
           messages: nextMessages.map((m) => ({
             role: m.role === "buyer" ? "user" : "assistant",
-            content: m.content
-          }))
-        })
+            content: m.content,
+          })),
+        }),
       });
 
+      // Wait for both — typing dots show for at least 1.2–2s
+      const [response] = await Promise.all([apiCall, typingDelay]);
       const data = (await response.json()) as { reply: string };
+      const profile = parseProfileFromText(data.reply);
+
+      if (profile) {
+        const confirmMsg: Message = {
+          role: "seller",
+          content: `Perfect — I'll search near ${profile.location} for "${profile.bikeType}" up to $${profile.budgetMax}. Let me go find you some deals!`,
+          timestamp: Date.now(),
+        };
+        setMessages((prev) => [...prev, confirmMsg]);
+        setLoading(false);
+        setTimeout(() => onComplete(profile), 1500);
+        return;
+      }
+
       const assistantMessage: Message = {
         role: "seller",
         content: data.reply,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
       setMessages((prev) => [...prev, assistantMessage]);
-
-      const parsed = parseProfileFromText(data.reply);
-      if (parsed) {
-        onComplete(parsed);
-      }
+    } catch {
+      await new Promise((r) => setTimeout(r, 1000));
+      const errorMsg: Message = {
+        role: "seller",
+        content: "Sorry, had a hiccup. Could you try that again?",
+        timestamp: Date.now(),
+      };
+      setMessages((prev) => [...prev, errorMsg]);
     } finally {
       setLoading(false);
     }
@@ -86,14 +108,14 @@ export function OnboardingChat({ onComplete }: OnboardingChatProps) {
 
   return (
     <div className="mx-auto flex h-[78vh] w-full max-w-2xl flex-col">
-      {/* Header — typographic, no container */}
+      {/* Header */}
       <div className="px-1 pb-6">
         <p className="text-xs font-medium uppercase tracking-widest text-ink/40">Step 1</p>
         <h2 className="mt-2 text-2xl font-light tracking-tight text-ink">
           Tell us what you want
         </h2>
         <p className="mt-1 text-sm text-ink/50">
-          What you want, where you are, and your budget.
+          Chat with MRI — it just needs a few details to start searching.
         </p>
       </div>
 
@@ -105,6 +127,7 @@ export function OnboardingChat({ onComplete }: OnboardingChatProps) {
             role={message.role}
             content={message.content}
             timestamp={message.timestamp}
+            sellerLabel="MRI"
           />
         ))}
         {loading && (
@@ -122,8 +145,9 @@ export function OnboardingChat({ onComplete }: OnboardingChatProps) {
         <input
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="e.g. what you're after, your location, and budget"
+          placeholder="Type a message..."
           className="flex-1 rounded-md border border-line bg-paper px-4 py-3 text-sm text-ink placeholder:text-ink/35 outline-none transition-colors focus:border-ink/30"
+          autoFocus
         />
         <button
           type="submit"

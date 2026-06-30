@@ -1,4 +1,4 @@
-// PedalBot v3 — the search agent. Turns a buyer profile into the top 3 ranked
+// MRI v3 — the search agent. Turns a buyer profile into the top 3 ranked
 // deals via: query planning → multi-query live search → dedupe → normalize →
 // cheap pre-score → item enrichment → hybrid (deterministic + LLM) rank.
 //
@@ -188,7 +188,7 @@ function deterministicRank(
         summary:
           listing.riskFlags.length > 0
             ? `${listing.title} at $${listing.price}. Watch: ${listing.riskFlags[0]}.`
-            : `${listing.title} at $${listing.price}. Solid fit for a ${profile.bikeType}.`,
+            : `${listing.title} at $${listing.price}. Solid fit for "${profile.bikeType}".`,
         suggestedFirstOffer,
         maxRecommendedPrice,
       } as RankedDeal;
@@ -301,8 +301,41 @@ export async function findTopDeals(
   // 5. Normalize.
   const normalized = deduped.map(normalizeMarketplaceListing);
 
+  // 5b. Filter out junk — listings with absurdly low prices or that have
+  // nothing to do with the buyer's query. Without this, $4 unrelated items
+  // from Marketplace can end up as "top deals".
+  const minReasonablePrice = Math.max(200, profile.budgetMin, Math.round(profile.budgetMax * 0.1));
+  const queryTerms = (profile.bikeType || "")
+    .toLowerCase()
+    .split(/\s+/)
+    .filter((t) => t.length > 2);
+  const filtered = normalized.filter((listing) => {
+    // Drop listings with no price or priced below minimum (likely junk/unrelated)
+    if (listing.price < minReasonablePrice) return false;
+    // Drop listings priced over 2x budget (way out of range)
+    if (listing.price > profile.budgetMax * 2) return false;
+    // Require at least one query term in title or description
+    if (queryTerms.length > 0) {
+      const haystack = `${listing.title} ${listing.description}`.toLowerCase();
+      const hasMatch = queryTerms.some((term) => haystack.includes(term));
+      if (!hasMatch) return false;
+    }
+    return true;
+  });
+
+  // If filtering removed everything, fall back to seeded listings.
+  if (filtered.length === 0) {
+    onProgress({
+      step: "fallback",
+      label: "No relevant results after filtering — using fallback data",
+    });
+    const ranked = await rankListings(fallbackListings, profile, plan, onProgress);
+    onProgress({ step: "done", label: "Top deals ready (fallback data)" });
+    return ranked.slice(0, 3);
+  }
+
   // 6. Pre-score cheaply, keep the best dozen for enrichment.
-  const candidates = normalized
+  const candidates = filtered
     .map((listing) => ({ listing, preScore: quickScore(listing, profile, plan) }))
     .sort((a, b) => b.preScore - a.preScore)
     .slice(0, 12)
@@ -354,9 +387,9 @@ function defaultPlan(profile: BuyerProfile): SearchPlan {
     radiusKm: profile.searchRadiusKm || 25,
     minPrice: profile.budgetMin,
     maxPrice: profile.budgetMax,
-    queries: [profile.bikeType || "bike", "used bicycle", "bike for sale"].filter(Boolean),
+    queries: [profile.bikeType || "iPhone", "used iPhone", "iPhone for sale"].filter(Boolean),
     includeTerms: [profile.bikeType, profile.frameSize].filter(Boolean) as string[],
-    excludeTerms: ["kids", "broken", "parts only"],
+    excludeTerms: ["broken", "parts only", "iCloud locked", "cracked"],
     condition: "used",
     dateListed: "last_7_days",
     countPerQuery: 20,

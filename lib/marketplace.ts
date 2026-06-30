@@ -1,4 +1,4 @@
-// PedalBot v3 — ScrapeCreators client helpers.
+// MRI v3 — ScrapeCreators client helpers.
 //
 // These run in the browser and talk to our own server-side proxy routes
 // (/api/marketplace/*) so the ScrapeCreators API key never reaches the client.

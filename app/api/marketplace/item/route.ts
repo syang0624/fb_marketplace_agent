@@ -1,4 +1,4 @@
-// PedalBot v3 — proxy to the ScrapeCreators Marketplace Item endpoint.
+// MRI v3 — proxy to the ScrapeCreators Marketplace Item endpoint.
 // Fetches item details by Marketplace item id or listing URL.
 
 export async function GET(req: Request) {
