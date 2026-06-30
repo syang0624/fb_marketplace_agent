@@ -4,6 +4,7 @@ interface ChatBubbleProps {
   role: Message["role"];
   content: string;
   timestamp: number;
+  sellerLabel?: string;
 }
 
 // agent_note and system render as quiet, centered annotations (no bubble) so the
@@ -20,8 +21,16 @@ const labelByRole: Record<"buyer" | "seller" | "draft", string> = {
   draft: "Draft"
 };
 
-export function ChatBubble({ role, content, timestamp }: ChatBubbleProps) {
+export function ChatBubble({ role, content, timestamp, sellerLabel }: ChatBubbleProps) {
   if (role === "agent_note") {
+    const isScamNote = content.toLowerCase().startsWith("scam detected:") || content.toLowerCase().startsWith("caution:");
+    if (isScamNote) {
+      return (
+        <div className="mx-auto max-w-[85%] rounded-md bg-red-50 px-3 py-2 text-center animate-fadeIn">
+          <p className="text-xs font-semibold text-red-700">&#9888; {content}</p>
+        </div>
+      );
+    }
     return (
       <p className="mx-auto max-w-[85%] text-center text-xs italic leading-relaxed text-ink/40 animate-fadeIn">
         {content}
@@ -40,7 +49,7 @@ export function ChatBubble({ role, content, timestamp }: ChatBubbleProps) {
   return (
     <div className={`max-w-[78%] rounded-md px-4 py-2.5 animate-fadeIn ${bubbleByRole[role]}`}>
       <p className="mb-1 text-[10px] font-medium uppercase tracking-wide opacity-50">
-        {labelByRole[role]}
+        {role === "seller" && sellerLabel ? sellerLabel : labelByRole[role]}
       </p>
       <p className="whitespace-pre-wrap text-sm leading-relaxed">{content}</p>
       <p className="mt-1.5 text-right text-[10px] tabular-nums opacity-40">

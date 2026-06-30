@@ -26,6 +26,15 @@ export function StageTracker({ currentStage }: StageTrackerProps) {
   const activeIndex = stageIndex(currentStage);
   const isWithdrawn = currentStage === "withdrawn";
 
+  if (currentStage === "scam_detected") {
+    return (
+      <div className="flex items-center gap-2 rounded-md bg-red-50 px-3 py-2">
+        <span className="text-sm">&#9888;</span>
+        <span className="text-xs font-semibold text-red-700">Scam Detected — Stopped</span>
+      </div>
+    );
+  }
+
   if (isWithdrawn) {
     return (
       <div className="flex items-center gap-2">
