@@ -25,3 +25,14 @@ yarn-error.log*
 
 # typescript
 *.tsbuildinfo
+
+# python environments
+.venv
+
+# python cache/test output
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# agent skills
+.agents
