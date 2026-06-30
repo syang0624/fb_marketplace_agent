@@ -40,3 +40,13 @@ def test_seller_string_and_photos_objects():
 def test_normalize_listings_maps_all():
     out = normalize_listings([{"url": "u1", "title": "a"}, {"url": "u2", "title": "b"}])
     assert [l.title for l in out] == ["a", "b"]
+
+
+def test_location_dict_uses_city_state():
+    listing = normalize_listing({"url": "u", "title": "t", "location": {"city": "San Francisco", "state": "CA"}})
+    assert listing.location == "San Francisco, CA"
+
+
+def test_location_coords_dict_returns_none():
+    listing = normalize_listing({"url": "u", "title": "t", "location": {"latitude": 37.7, "longitude": -122.4}})
+    assert listing.location is None

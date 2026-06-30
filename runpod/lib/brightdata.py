@@ -67,6 +67,21 @@ def _extract_seller(node: dict) -> Optional[str]:
     return None
 
 
+def _extract_location(node: dict) -> Optional[str]:
+    # Prefer an explicit text field; a bare `location` dict may be lat/lng coords
+    # (no display name) and must not produce garbage.
+    loc = _pick(node, ["location_text", "location", "city"])
+    if isinstance(loc, str):
+        return loc
+    if isinstance(loc, dict):
+        if isinstance(loc.get("display_name"), str):
+            return loc["display_name"]
+        parts = [p for p in (loc.get("city"), loc.get("state")) if isinstance(p, str)]
+        if parts:
+            return ", ".join(parts)
+    return None
+
+
 def normalize_listing(raw: dict) -> Listing:
     node = raw.get("node") if isinstance(raw.get("node"), dict) else raw
     listing_id = _pick(node, ["id", "listing_id", "item_id", "product_id"])
@@ -79,9 +94,7 @@ def normalize_listing(raw: dict) -> Listing:
         condition=_pick(node, ["condition"]),
         description=_pick(node, ["description", "redacted_description", "body"]),
         seller=_extract_seller(node),
-        location=_pick(node, ["location", "location_text", "city"]) if isinstance(
-            _pick(node, ["location", "location_text", "city"]), str
-        ) else None,
+        location=_extract_location(node),
         images=_extract_images(node),
         raw=raw,
     )
