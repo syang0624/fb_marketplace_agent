@@ -59,6 +59,7 @@ def parse_defect_response(text: str, image_url: str) -> ImageDefectReport:
             confidence = float(d.get("confidence", 0.0))
         except (ValueError, TypeError):
             confidence = 0.0
+        confidence = max(0.0, min(1.0, confidence))
         defects.append(Defect(
             type=str(d.get("type", "unknown")),
             component=str(d.get("component", "unknown")),

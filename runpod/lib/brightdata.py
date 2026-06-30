@@ -7,7 +7,10 @@ import re
 from pathlib import Path
 from typing import Any, Optional
 
-import requests
+try:
+    import requests
+except ImportError:  # keeps the pure normalize/fixture/demo path stdlib-only
+    requests = None
 
 from runpod.lib.schema import Listing
 
@@ -127,6 +130,8 @@ def scrape_listings(urls: list[str], token: Optional[str]) -> list[Listing]:
     """Detail-by-URL via BrightData sync /scrape (<=20 urls). No token -> fixtures."""
     if not token:
         return load_fixture_listings()
+    if requests is None:
+        raise RuntimeError("the 'requests' package is required for live BrightData calls")
     resp = requests.post(
         f"{BD_BASE}/datasets/v3/scrape",
         headers=_headers(token),
@@ -142,6 +147,8 @@ def scrape_listings(urls: list[str], token: Optional[str]) -> list[Listing]:
 
 def trigger_search(query: str, location: str, limit: int, token: str) -> str:
     """Discovery via async /trigger -> returns snapshot_id to poll."""
+    if requests is None:
+        raise RuntimeError("the 'requests' package is required for live BrightData calls")
     resp = requests.post(
         f"{BD_BASE}/datasets/v3/trigger",
         headers=_headers(token),
@@ -155,6 +162,8 @@ def trigger_search(query: str, location: str, limit: int, token: str) -> str:
 
 def fetch_snapshot(snapshot_id: str, token: str) -> Optional[list[Listing]]:
     """Poll a snapshot. Returns None while still running, listings when ready."""
+    if requests is None:
+        raise RuntimeError("the 'requests' package is required for live BrightData calls")
     resp = requests.get(
         f"{BD_BASE}/datasets/v3/snapshot/{snapshot_id}",
         headers={"Authorization": f"Bearer {token}"},

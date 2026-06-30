@@ -17,6 +17,8 @@ async def listing(data: dict):
     from runpod.lib.schema import to_jsonable
 
     urls = data.get("urls") or ([data["url"]] if data.get("url") else [])
+    if not urls:
+        return {"listings": []}
     token = os.environ.get("BRIGHTDATA_API_TOKEN")
     listings = scrape_listings(urls, token)
     return {"listings": [to_jsonable(l) for l in listings]}
@@ -31,8 +33,12 @@ async def search(data: dict):
     token = os.environ.get("BRIGHTDATA_API_TOKEN")
     if not token:
         return {"listings": [to_jsonable(l) for l in load_fixture_listings()], "snapshot_id": None}
+    try:
+        limit = int(data.get("limit", 10))
+    except (TypeError, ValueError):
+        limit = 10
     snapshot_id = trigger_search(
-        data.get("query", "iPhone"), data.get("location", ""), int(data.get("limit", 10)), token
+        data.get("query", "iPhone"), data.get("location", ""), limit, token
     )
     return {"snapshot_id": snapshot_id, "listings": None}
 
@@ -44,7 +50,10 @@ async def snapshot(data: dict):
     from runpod.lib.schema import to_jsonable
 
     token = os.environ.get("BRIGHTDATA_API_TOKEN")
-    listings = fetch_snapshot(data["snapshot_id"], token)
+    snapshot_id = data.get("snapshot_id")
+    if not snapshot_id:
+        return {"status": "error", "listings": None, "error": "snapshot_id is required"}
+    listings = fetch_snapshot(snapshot_id, token)
     if listings is None:
         return {"status": "pending", "listings": None}
     return {"status": "ready", "listings": [to_jsonable(l) for l in listings]}

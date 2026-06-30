@@ -63,3 +63,9 @@ def test_non_dict_defect_entry_skipped():
     text = '{"defects": ["not-an-object", {"type": "x", "component": "y", "severity": "minor", "confidence": 0.5}], "condition_grade": "good", "negotiation_summary": ""}'
     r = parse_defect_response(text, "i")
     assert len(r.defects) == 1
+
+
+def test_confidence_clamped_to_unit_interval():
+    text = '{"defects": [{"type": "x", "component": "y", "severity": "minor", "confidence": 5}], "condition_grade": "fair", "negotiation_summary": ""}'
+    r = parse_defect_response(text, "i")
+    assert r.defects[0].confidence == 1.0
