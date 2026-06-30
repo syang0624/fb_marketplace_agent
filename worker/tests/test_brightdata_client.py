@@ -1,4 +1,4 @@
-import runpod.lib.brightdata as bd
+import lib.brightdata as bd
 
 # A minimal Facebook-Marketplace-style page: the listing data lives in JSON
 # embedded in a <script> tag, wrapped the way Facebook nests it.

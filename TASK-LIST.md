@@ -1,4 +1,4 @@
-# PedalBot v3 — Task List
+# MRI (Market Research Intelligence) v3 — Task List
 
 > Steven: Frontend + Infra (branch: `steven`) | Nori: Data + Backend (branch: `nori`)
 >
@@ -141,7 +141,7 @@ Depends on: **N11** (agent loop), **N12** (personas) — available after Sync Po
 - [ ] **S12** Build `components/StageTracker.tsx` — pill row (Outreach → Price → Condition → Counter → Logistics → Final) with active/completed/future states + withdrawn badge
 - [ ] **S13** Build `components/NegotiationLane.tsx` — single lane card (thumbnail, stage tracker, current price, reasoning, message preview, "View chat" / "Take over" buttons)
 - [ ] **S14** Build `components/NegotiationDashboard.tsx` — 3-lane layout, header with honesty copy, re-renders on agent loop updates
-- [ ] **S15** Build `components/ChatDrawer.tsx` — slide-out panel with full message history, agent_note styling, take-over toggle, manual text input, "Return control to PedalBot" button
+- [ ] **S15** Build `components/ChatDrawer.tsx` — slide-out panel with full message history, agent_note styling, take-over toggle, manual text input, "Return control to MRI (Market Research Intelligence)" button
 
 ---
 

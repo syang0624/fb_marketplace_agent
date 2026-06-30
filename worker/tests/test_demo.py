@@ -1,4 +1,4 @@
-from runpod.demo import build_reports_offline
+from demo import build_reports_offline
 
 
 def test_offline_demo_builds_one_report_per_fixture_listing():

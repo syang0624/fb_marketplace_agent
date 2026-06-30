@@ -22,8 +22,8 @@ scraper = Endpoint(
 @scraper.post("/listing")
 async def listing(data: dict):
     import os
-    from runpod.lib.brightdata import scrape_listings
-    from runpod.lib.schema import to_jsonable
+    from lib.brightdata import scrape_listings
+    from lib.schema import to_jsonable
 
     urls = data.get("urls") or ([data["url"]] if data.get("url") else [])
     if not urls:
@@ -36,8 +36,8 @@ async def listing(data: dict):
 @scraper.post("/search")
 async def search(data: dict):
     import os
-    from runpod.lib.brightdata import search_listings
-    from runpod.lib.schema import to_jsonable
+    from lib.brightdata import search_listings
+    from lib.schema import to_jsonable
 
     token = os.environ.get("BRIGHTDATA_API_TOKEN")
     try:

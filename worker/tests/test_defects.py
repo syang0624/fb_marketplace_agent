@@ -1,4 +1,4 @@
-from runpod.lib.defects import build_defect_prompt, parse_defect_response
+from lib.defects import build_defect_prompt, parse_defect_response
 
 
 def test_prompt_mentions_iphone_and_json():

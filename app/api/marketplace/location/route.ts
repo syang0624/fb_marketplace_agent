@@ -21,6 +21,7 @@ export async function GET(req: Request) {
     const response = await fetch(upstream.toString(), {
       headers: { "x-api-key": process.env.SCRAPECREATORS_API_KEY },
       cache: "no-store",
+      signal: AbortSignal.timeout(Number(process.env.SCRAPECREATORS_TIMEOUT_MS || 15000)),
     });
     if (!response.ok) return Response.json(SF_FALLBACK);
     const data = await response.json();

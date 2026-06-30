@@ -1,4 +1,4 @@
-# MVP Ideation: PedalBot — AI-Powered Used Bike Deal Finder & Negotiation Assistant
+# MVP Ideation: MRI (Market Research Intelligence) — AI-Powered Used Bike Deal Finder & Negotiation Assistant
 
 > An AI assistant that scans Facebook Marketplace bike listings to surface the top 3 deals and manages parallel negotiations with sellers so buyers get the best bike at the best price.
 

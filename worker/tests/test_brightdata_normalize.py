@@ -1,4 +1,4 @@
-from runpod.lib.brightdata import normalize_listing, normalize_listings
+from lib.brightdata import normalize_listing, normalize_listings
 
 
 def test_normalizes_flat_brightdata_record():

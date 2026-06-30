@@ -1,6 +1,6 @@
-# PedalBot
+# MRI (Market Research Intelligence)
 
-PedalBot is a Facebook Marketplace buying-agent demo. It turns a buyer request into live Marketplace searches, ranks the best listings, flags risk, and simulates negotiation with sellers.
+MRI (Market Research Intelligence) is a Facebook Marketplace buying-agent demo. It turns a buyer request into live Marketplace searches, ranks the best listings, flags risk, and simulates negotiation with sellers.
 
 The current app is a Next.js frontend with server-side API proxy routes for chat and Marketplace data. The RunPod/BrightData/VLM work under `runpod/` is in progress and currently includes schema, fixtures, normalization logic, and tests.
 
