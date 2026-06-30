@@ -25,7 +25,7 @@ def build_defect_prompt() -> str:
 
 
 def _extract_json(text: str) -> dict[str, Any] | None:
-    fence = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", text, re.DOTALL)
+    fence = re.search(r"```(?:json)?\s*(\{.*\})\s*```", text, re.DOTALL)
     candidate = fence.group(1) if fence else None
     if candidate is None:
         brace = re.search(r"\{.*\}", text, re.DOTALL)
@@ -69,7 +69,7 @@ def parse_defect_response(text: str, image_url: str) -> ImageDefectReport:
     return ImageDefectReport(
         image_url=image_url,
         defects=defects,
-        condition_grade=str(obj.get("condition_grade", "unknown")),
+        condition_grade=str(obj.get("condition_grade") or "unknown"),
         negotiation_summary=str(obj.get("negotiation_summary", "")),
         error=None,
     )
