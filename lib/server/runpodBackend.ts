@@ -25,7 +25,9 @@ async function postJson(baseUrl: string, path: string, body: JsonObject): Promis
     return await fetch(joinUrl(baseUrl, path), {
       method: "POST",
       headers,
-      body: JSON.stringify(body),
+      // Flash load-balancer routes expose the handler's `data: dict` param as a
+      // required top-level body field named `data`; an unwrapped payload 422s.
+      body: JSON.stringify({ data: body }),
       cache: "no-store",
       signal: AbortSignal.timeout(RUNPOD_TIMEOUT_MS),
     });
