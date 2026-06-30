@@ -101,7 +101,7 @@ export function normalizeMarketplaceListing(raw: MarketplaceRawListing): Listing
     fairValue: estimateFairValue(price),
     specs: "",
     image,
-    images: image ? [image] : [],
+    images: raw.images?.length ? raw.images : image ? [image] : [],
     sellerName: raw.sellerName || "Marketplace Seller",
     distance: raw.distance || "",
     description: raw.description || "",
@@ -159,6 +159,70 @@ interface LlmRankItem {
   summary: string;
   suggestedFirstOffer: number;
   maxRecommendedPrice: number;
+}
+
+interface ImageDefectReport {
+  image_url: string;
+  defects?: Array<{
+    type?: string;
+    component?: string;
+    severity?: string;
+    confidence?: number;
+    note?: string;
+  }>;
+  condition_grade?: string;
+  negotiation_summary?: string;
+  error?: string | null;
+}
+
+async function detectDefects(imageUrls: string[]): Promise<ImageDefectReport[]> {
+  const unique = Array.from(new Set(imageUrls.filter(Boolean)));
+  if (!unique.length) return [];
+
+  try {
+    const res = await fetch("/api/vision/defects", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ image_urls: unique }),
+    });
+    if (!res.ok) return [];
+    const data = (await res.json()) as { reports?: ImageDefectReport[] };
+    return data.reports ?? [];
+  } catch {
+    return [];
+  }
+}
+
+async function annotateDefects(listings: Listing[]): Promise<Listing[]> {
+  const imageUrls = listings.flatMap((listing) => listing.images.length ? listing.images : [listing.image]);
+  const reports = await detectDefects(imageUrls);
+  if (!reports.length) return listings;
+
+  const byUrl = new Map(reports.map((report) => [report.image_url, report]));
+  return listings.map((listing) => {
+    const urls = listing.images.length ? listing.images : [listing.image];
+    const listingReports = urls.map((url) => byUrl.get(url)).filter(Boolean) as ImageDefectReport[];
+    const defectNotes = listingReports.flatMap((report) =>
+      (report.defects ?? []).map((defect) =>
+        [defect.severity, defect.component, defect.type].filter(Boolean).join(" ")
+      )
+    );
+    const summaries = listingReports
+      .map((report) => report.negotiation_summary)
+      .filter((summary): summary is string => Boolean(summary));
+    const grades = listingReports
+      .map((report) => report.condition_grade)
+      .filter((grade): grade is string => Boolean(grade) && grade !== "unknown");
+
+    if (!defectNotes.length && !summaries.length && !grades.length) return listing;
+
+    return {
+      ...listing,
+      condition: grades[0] ?? listing.condition,
+      specs: summaries[0] ? `${listing.specs} ${summaries[0]}`.trim() : listing.specs,
+      riskFlags: Array.from(new Set([...listing.riskFlags, ...defectNotes, ...summaries])),
+    };
+  });
 }
 
 // Deterministic ranking — always available, never random. Used as the base
@@ -263,6 +327,7 @@ export async function findTopDeals(
         query,
         lat,
         lng,
+        location: plan.location,
         radius_km: plan.radiusKm,
         min_price: plan.minPrice,
         max_price: plan.maxPrice,
@@ -347,9 +412,10 @@ export async function findTopDeals(
     label: `Fetching details for ${candidates.length} likely candidates`,
   });
   const enriched = await Promise.all(candidates.map(enrichListing));
+  const visionAnnotated = await annotateDefects(enriched);
 
   // 8. Hybrid rank → top 3.
-  const ranked = await rankListings(enriched, profile, plan, onProgress);
+  const ranked = await rankListings(visionAnnotated, profile, plan, onProgress);
   onProgress({ step: "done", label: "Ranked top 3 by value, fit, risk, and pickup" });
   return ranked.slice(0, 3);
 }

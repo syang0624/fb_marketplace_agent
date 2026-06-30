@@ -48,6 +48,7 @@ export interface MarketplaceRawListing {
   price?: number;
   location?: string;
   image?: string;
+  images?: string[];
   sellerName?: string;
   description?: string;
   distance?: string;

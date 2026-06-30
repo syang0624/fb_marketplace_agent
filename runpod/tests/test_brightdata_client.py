@@ -91,3 +91,29 @@ def test_search_listings_with_token_unlocks_search_url(monkeypatch):
 def test_load_fixture_listings_shape():
     out = bd.load_fixture_listings()
     assert all(l.url for l in out)
+
+
+# An item page embeds the target listing (with a description) plus a
+# recommendation rail of other listings that lack one.
+DETAIL_HTML = """
+<script type="application/json">
+{"feed":[
+ {"id":"999","marketplace_listing_title":"Random Bike","listing_price":{"amount":"50"}},
+ {"id":"123","marketplace_listing_title":"iPhone 13 128GB","listing_price":{"amount":"380","formatted_amount":"$380"},"redacted_description":{"text":"Great condition"},"location_text":{"text":"Oakland, CA"}}
+]}
+</script>
+"""
+
+
+def test_scrape_listings_picks_detail_target_not_recommendations(monkeypatch):
+    class FakeResp:
+        status_code = 200
+        text = DETAIL_HTML
+        def raise_for_status(self): pass
+
+    monkeypatch.setattr(bd.requests, "post", lambda *a, **k: FakeResp())
+    out = bd.scrape_listings(["https://www.facebook.com/marketplace/item/123"], token="TKN")
+    assert len(out) == 1
+    assert out[0].title == "iPhone 13 128GB"
+    assert out[0].description == "Great condition"
+    assert out[0].location == "Oakland, CA"

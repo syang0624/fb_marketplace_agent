@@ -50,3 +50,13 @@ def test_location_dict_uses_city_state():
 def test_location_coords_dict_returns_none():
     listing = normalize_listing({"url": "u", "title": "t", "location": {"latitude": 37.7, "longitude": -122.4}})
     assert listing.location is None
+
+
+def test_location_reverse_geocode_city_state():
+    listing = normalize_listing({"url": "u", "title": "t", "location": {"reverse_geocode": {"city": "Oakland", "state": "CA"}}})
+    assert listing.location == "Oakland, CA"
+
+
+def test_location_text_wrapper_preferred():
+    listing = normalize_listing({"url": "u", "title": "t", "location_text": {"text": "San Jose, CA"}, "location": {"latitude": 1.0, "longitude": 2.0}})
+    assert listing.location == "San Jose, CA"

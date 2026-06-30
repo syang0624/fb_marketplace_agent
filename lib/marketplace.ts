@@ -11,6 +11,7 @@ export interface MarketplaceSearchParams {
   query: string;
   lat: number;
   lng: number;
+  location?: string;
   radius_km?: number;
   min_price?: number;
   max_price?: number;
@@ -72,17 +73,26 @@ function extractPrice(node: Record<string, unknown>): number | undefined {
   return toNumber(pick(node, ["amount"]));
 }
 
-// search → primary_photo.url ; item → photos[0].url ; plus legacy single keys.
+function extractImages(node: Record<string, unknown>): string[] {
+  const out: string[] = [];
+  const images = pick(node, ["images", "photos", "listing_photos"]);
+  if (Array.isArray(images)) {
+    for (const image of images) {
+      if (typeof image === "string" && image) out.push(image);
+      const obj = asRecord(image);
+      if (obj && typeof obj.url === "string" && obj.url) out.push(obj.url);
+    }
+  }
+  return Array.from(new Set(out));
+}
+
+// search → primary_photo.url ; item → photos[0].url ; RunPod → images[0].
 function extractImage(node: Record<string, unknown>): string {
   const primary = asRecord(pick(node, ["primary_photo", "primary_listing_photo"]));
   if (primary && typeof primary.url === "string") return primary.url;
 
-  const photos = pick(node, ["photos", "listing_photos"]);
-  if (Array.isArray(photos) && photos.length) {
-    const first = asRecord(photos[0]);
-    if (first && typeof first.url === "string") return first.url;
-    if (typeof photos[0] === "string") return photos[0] as string;
-  }
+  const images = extractImages(node);
+  if (images.length) return images[0];
 
   const single = pick(node, ["image", "primary_image", "thumbnail", "photo", "imageUrl"]);
   if (typeof single === "string") return single;
@@ -148,6 +158,7 @@ export function normalizeRawListing(item: Record<string, unknown>): MarketplaceR
     price: extractPrice(node),
     location: extractLocationText(node),
     image: extractImage(node),
+    images: extractImages(node),
     sellerName,
     description: pick(node, ["description", "redacted_description", "body", "desc"]) as
       | string
@@ -256,6 +267,9 @@ export async function getItemDetails(
 
   try {
     const data = (await getJson(`/api/marketplace/item?${qs.toString()}`)) as Record<string, unknown>;
+    const listings = extractListingArray(data);
+    if (listings.length) return normalizeRawListing(listings[0]);
+
     // Item detail may be the object itself or nested under a key.
     const inner =
       data && typeof data === "object" && (data.listing || data.item || data.data)

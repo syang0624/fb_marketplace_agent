@@ -118,15 +118,21 @@ def _extract_seller(node: dict) -> Optional[str]:
 
 def _extract_location(node: dict) -> Optional[str]:
     # Prefer an explicit text field; a bare `location` dict may be lat/lng coords
-    # (no display name) and must not produce garbage.
-    loc = _pick(node, ["location_text", "location", "city"])
+    # (no display name) and must not produce garbage. Facebook search nodes nest
+    # the place under `location.reverse_geocode`.
+    text = _as_text(_pick(node, ["location_text"]))
+    if text:
+        return text
+    loc = _pick(node, ["location", "city"])
     if isinstance(loc, str):
         return loc
     if isinstance(loc, dict):
+        rg = loc.get("reverse_geocode")
+        src = rg if isinstance(rg, dict) else loc
         for k in ("text", "display_name"):
-            if isinstance(loc.get(k), str):
-                return loc[k]
-        parts = [p for p in (loc.get("city"), loc.get("state")) if isinstance(p, str)]
+            if isinstance(src.get(k), str):
+                return src[k]
+        parts = [p for p in (src.get("city"), src.get("state")) if isinstance(p, str)]
         if parts:
             return ", ".join(parts)
     return None
@@ -232,17 +238,49 @@ def _search_url(query: str, location: str) -> str:
     return f"{base}?{qs}"
 
 
+def _item_id_from_url(url: str) -> Optional[str]:
+    match = re.search(r"/item/(\d+)", url)
+    return match.group(1) if match else None
+
+
+def _has_description(record: dict) -> bool:
+    desc = record.get("redacted_description")
+    if isinstance(desc, dict) and desc.get("text"):
+        return True
+    return isinstance(record.get("description"), str) and bool(record["description"])
+
+
+def _select_target_node(records: list[dict], target_id: Optional[str]) -> Optional[dict]:
+    """An item page embeds the target listing (often as both a lightweight feed
+    node and a rich detail node with the same id) plus a recommendation rail.
+    Prefer the id-matched node that carries a description, then any id match, then
+    any description-bearing node, then the first."""
+    id_matches = [r for r in records if target_id and str(r.get("id")) == target_id]
+    for record in id_matches:
+        if _has_description(record):
+            return record
+    if id_matches:
+        return id_matches[0]
+    for record in records:
+        if _has_description(record):
+            return record
+    return records[0] if records else None
+
+
 def scrape_listings(urls: list[str], token: Optional[str]) -> list[Listing]:
-    """Detail-by-URL via Web Unlocker. No token -> seeded fixtures."""
+    """Detail-by-URL via Web Unlocker. No token -> seeded fixtures. Returns the
+    target listing per item URL (not the page's recommendation rail)."""
     if not token:
         return load_fixture_listings()
     out: list[Listing] = []
     for url in urls:
         html = _unlock_html(url, token)
         records = extract_listings_from_html(html)
-        for record in records:
-            record.setdefault("url", url)
-        out.extend(normalize_listings(records))
+        node = _select_target_node(records, _item_id_from_url(url))
+        if node is None:
+            continue
+        node.setdefault("url", url)
+        out.append(normalize_listing(node))
     return out
 
 
