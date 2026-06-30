@@ -39,6 +39,7 @@ export async function GET(req: Request) {
     const response = await fetch(upstream.toString(), {
       headers: { "x-api-key": process.env.SCRAPECREATORS_API_KEY },
       cache: "no-store",
+      signal: AbortSignal.timeout(Number(process.env.SCRAPECREATORS_TIMEOUT_MS || 15000)),
     });
     const data = await response.json();
     return Response.json(data, { status: response.status });
