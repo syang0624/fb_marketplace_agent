@@ -29,3 +29,16 @@ def test_assemble_deal_report_merges():
     assert report.overall_condition_grade == "fair"
     assert report.comparables == [{"price": 350}]
     assert report.negotiation_evidence["defect_count"] == 1
+
+
+def test_moderate_in_reasons_minor_excluded():
+    listing = Listing(url="u", title="iPhone", price=300.0)
+    reps = [_rep("fair", [Defect("dent", "corner", "moderate", 0.6, ""), Defect("scratch", "back", "minor", 0.3, "")])]
+    ev = negotiation_evidence(listing, reps)
+    assert ev["defect_count"] == 2
+    assert any("corner" in r for r in ev["reasons"])
+    assert not any("back" in r for r in ev["reasons"])
+
+
+def test_overall_grade_unknown_for_nonstandard_grades():
+    assert overall_grade([_rep("n/a"), _rep("???")]) == "unknown"

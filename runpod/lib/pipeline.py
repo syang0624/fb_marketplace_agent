@@ -40,6 +40,6 @@ def assemble_deal_report(
         listing=listing,
         image_reports=reports,
         overall_condition_grade=overall_grade(reports),
-        comparables=comparables or [],
+        comparables=comparables if comparables is not None else [],
         negotiation_evidence=negotiation_evidence(listing, reports),
     )
