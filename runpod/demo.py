@@ -22,7 +22,8 @@ def _stub_report_for(listing) -> ImageDefectReport:
             condition_grade="poor",
             negotiation_summary="Seller states the screen is cracked.",
         )
-    if "scratch" in desc:
+    # naive keyword stub: skip negated mentions like "no scratches"
+    if "scratch" in desc and "no scratch" not in desc:
         return ImageDefectReport(
             image_url=image_url,
             defects=[Defect("scratch", "body", "minor", 0.6, "described as scratched")],
