@@ -45,12 +45,14 @@ async def defects(data: dict):
 
     prompt = build_defect_prompt()
     reports = []
-    for url in data.get("image_urls", []):
+    for url in (data.get("image_urls") or []):
         try:
             report = parse_defect_response(_infer(url, prompt), url)
             if report.error == "unparseable":  # one structured-repair retry
                 retry_prompt = prompt + "\nReturn ONLY valid json, nothing else."
                 report = parse_defect_response(_infer(url, retry_prompt), url)
+                if report.error == "unparseable":
+                    report.error = "unparseable_after_retry"
         except Exception as exc:  # bad/unreachable image -> per-image error, continue
             report = ImageDefectReport(image_url=url, condition_grade="unknown",
                                        negotiation_summary="", error=str(exc)[:200])
