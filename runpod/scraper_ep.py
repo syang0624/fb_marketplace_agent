@@ -1,12 +1,21 @@
 """RunPod Flash CPU endpoint: BrightData Facebook Marketplace scraping."""
+import os
+
 from runpod_flash import Endpoint, CpuInstanceType
 
+# Forward the local BrightData credentials into the remote worker's environment
+# at deploy/dev time so the route bodies can read them via os.environ. Empty
+# strings when unset keep the keyless fixture fallback working.
 scraper = Endpoint(
     name="fbm-scraper",
     cpu=CpuInstanceType.CPU5C_2_4,
     workers=(1, 3),
     max_concurrency=4,
     dependencies=["requests"],
+    env={
+        "BRIGHTDATA_API_TOKEN": os.environ.get("BRIGHTDATA_API_TOKEN", ""),
+        "BRIGHTDATA_DATASET_ID": os.environ.get("BRIGHTDATA_DATASET_ID", "gd_facebook_marketplace"),
+    },
 )
 
 
