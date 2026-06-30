@@ -25,6 +25,7 @@ export function FinalOffersReview({
   const [viewingSellerId, setViewingSellerId] = useState<string | null>(null);
 
   const finalOffers = negotiations.filter((n) => n.stage === "final_offer" && n.finalOffer);
+  const scamDetected = negotiations.filter((n) => n.stage === "scam_detected");
   const withdrawn = negotiations.filter((n) => n.stage === "withdrawn");
   const modifyingNeg = modifyingSellerId
     ? negotiations.find((n) => n.sellerId === modifyingSellerId)
@@ -65,7 +66,7 @@ export function FinalOffersReview({
 
               {/* Content */}
               <div className="flex flex-1 flex-col gap-4 p-5">
-                <h3 className="text-sm font-medium leading-snug text-ink">{offer.bikeTitle}</h3>
+                <h3 className="text-sm font-medium leading-snug text-ink">{offer.bikeTitle || neg.listing.title}</h3>
 
                 {/* Price */}
                 <div className="flex items-baseline gap-2">
@@ -137,6 +138,60 @@ export function FinalOffersReview({
           );
         })}
       </div>
+
+      {/* Scam detected */}
+      {scamDetected.length > 0 && (
+        <div className="mt-12">
+          <h3 className="flex items-center gap-2 text-xs font-medium uppercase tracking-widest text-red-600">
+            <span>&#9888;</span> Scam Detected
+          </h3>
+          <div className="mt-4 space-y-3">
+            {scamDetected.map((neg) => (
+              <div
+                key={neg.sellerId}
+                className="rounded-lg border border-red-200 bg-red-50/50 p-4"
+              >
+                <div className="flex items-center gap-4">
+                  <ProductImage
+                    src={neg.listing.image}
+                    alt={neg.listing.title}
+                    fallbackLabel=""
+                    className="h-9 w-9 flex-shrink-0 rounded-md object-cover opacity-60"
+                  />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium text-ink/70">
+                      {neg.listing.title}
+                    </p>
+                    <p className="truncate text-xs text-red-600">
+                      {neg.scamAlert?.summary ?? "Scam indicators detected — negotiation stopped."}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setViewingSellerId(neg.sellerId)}
+                    className="text-xs font-medium text-ink/50 transition-colors hover:text-ink"
+                  >
+                    View chat
+                  </button>
+                  <span className="flex items-center gap-1.5 text-xs font-semibold text-red-600">
+                    <span className="h-1.5 w-1.5 rounded-full bg-red-500" />
+                    Stopped
+                  </span>
+                </div>
+                {neg.scamAlert && neg.scamAlert.flags.length > 0 && (
+                  <ul className="mt-3 ml-13 space-y-0.5 text-xs text-red-600/80">
+                    {neg.scamAlert.flags.map((flag, i) => (
+                      <li key={i} className="flex items-start gap-1.5">
+                        <span className="mt-0.5 h-1 w-1 flex-shrink-0 rounded-full bg-red-400" />
+                        {flag}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Withdrawn */}
       {withdrawn.length > 0 && (

@@ -1,4 +1,4 @@
-// PedalBot v3 — proxy to the ScrapeCreators Marketplace Search endpoint.
+// MRI v3 — proxy to the ScrapeCreators Marketplace Search endpoint.
 // Keeps SCRAPECREATORS_API_KEY server-side; forwards all query params through.
 
 export async function GET(req: Request) {
