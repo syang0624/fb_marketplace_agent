@@ -10,7 +10,7 @@
     "seller": {"name": "Alex M."},
     "location": "San Francisco, CA",
     "images": [
-      "https://upload.wikimedia.org/wikipedia/commons/3/3d/IPhone_13_vector.svg"
+      "https://commons.wikimedia.org/wiki/Special:FilePath/IPhone%20models.jpg"
     ]
   },
   {
@@ -24,7 +24,7 @@
     "seller": {"name": "Jordan P."},
     "location": "Oakland, CA",
     "images": [
-      "https://upload.wikimedia.org/wikipedia/commons/8/8d/Broken_iPhone.jpg"
+      "https://commons.wikimedia.org/wiki/Special:FilePath/Cracked%20iPhone.jpg"
     ]
   },
   {
@@ -38,7 +38,7 @@
     "seller": {"name": "Sam R."},
     "location": "Berkeley, CA",
     "images": [
-      "https://upload.wikimedia.org/wikipedia/commons/2/2c/IPhone_14_Pro_vector.svg"
+      "https://commons.wikimedia.org/wiki/Special:FilePath/IPhone%205.png"
     ]
   }
 ]
