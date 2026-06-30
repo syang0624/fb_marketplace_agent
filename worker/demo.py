@@ -14,9 +14,9 @@ import json
 import sys
 
 try:
-    from runpod.lib.brightdata import load_fixture_listings, search_listings
-    from runpod.lib.schema import Defect, ImageDefectReport, DealReport, to_jsonable
-    from runpod.lib.pipeline import assemble_deal_report
+    from lib.brightdata import load_fixture_listings, search_listings
+    from lib.schema import Defect, ImageDefectReport, DealReport, to_jsonable
+    from lib.pipeline import assemble_deal_report
 except ModuleNotFoundError as exc:
     if exc.name != "runpod":
         raise
@@ -57,7 +57,7 @@ def build_reports_offline() -> list[DealReport]:
 def build_reports_live(query: str = "iPhone 13", limit: int = 3) -> list[DealReport]:
     """Live: BrightData scrape + GMI hosted vision (stub fallback). No RunPod."""
     import os
-    from runpod.lib.vision_gmi import detect_defects
+    from lib.vision_gmi import detect_defects
 
     token = os.environ.get("BRIGHTDATA_API_TOKEN")
     reports = []

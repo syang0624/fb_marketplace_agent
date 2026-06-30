@@ -1,4 +1,4 @@
-from runpod.lib.schema import Listing, Defect, ImageDefectReport, DealReport, listing_from_dict, to_jsonable
+from lib.schema import Listing, Defect, ImageDefectReport, DealReport, listing_from_dict, to_jsonable
 
 
 def test_listing_from_dict_minimal():

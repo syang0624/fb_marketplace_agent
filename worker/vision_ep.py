@@ -40,8 +40,8 @@ def _infer(image_url: str, prompt: str) -> str:
 
 @vision.post("/defects")
 async def defects(data: dict):
-    from runpod.lib.defects import build_defect_prompt, parse_defect_response
-    from runpod.lib.schema import to_jsonable, ImageDefectReport
+    from lib.defects import build_defect_prompt, parse_defect_response
+    from lib.schema import to_jsonable, ImageDefectReport
 
     prompt = build_defect_prompt()
     reports = []

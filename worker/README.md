@@ -19,7 +19,7 @@ the demo working.
 ## Dev / Deploy
 - `flash dev` — run endpoints on remote workers with hot reload
 - `flash deploy` — ship stable endpoints
-- `python -m runpod.demo` — offline end-to-end demo
+- `python -m demo` — offline end-to-end demo
 
 ## HTTP contract (for the UI)
 POST /scraper_ep/listing     {urls:[str]}             -> {listings:[Listing]}

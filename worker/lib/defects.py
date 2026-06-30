@@ -6,7 +6,7 @@ import re
 from typing import Any
 
 try:
-    from runpod.lib.schema import Defect, ImageDefectReport
+    from lib.schema import Defect, ImageDefectReport
 except ModuleNotFoundError as exc:
     if exc.name != "runpod":
         raise

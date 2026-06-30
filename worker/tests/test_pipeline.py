@@ -1,5 +1,5 @@
-from runpod.lib.schema import Listing, Defect, ImageDefectReport
-from runpod.lib.pipeline import overall_grade, negotiation_evidence, assemble_deal_report
+from lib.schema import Listing, Defect, ImageDefectReport
+from lib.pipeline import overall_grade, negotiation_evidence, assemble_deal_report
 
 
 def _rep(grade, defects=()):

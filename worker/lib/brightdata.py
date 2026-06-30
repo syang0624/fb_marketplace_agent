@@ -25,7 +25,7 @@ except ImportError:  # keeps the pure normalize/parse/fixture/demo path stdlib-o
     requests = None
 
 try:
-    from runpod.lib.schema import Listing
+    from lib.schema import Listing
 except ModuleNotFoundError as exc:
     if exc.name != "runpod":
         raise

@@ -10,8 +10,8 @@ import os
 import time
 from typing import Optional
 
-from runpod.lib.defects import build_defect_prompt, parse_defect_response
-from runpod.lib.schema import ImageDefectReport
+from lib.defects import build_defect_prompt, parse_defect_response
+from lib.schema import ImageDefectReport
 
 GMI_BASE = (
     os.environ.get("GMI_MAAS_BASE_URL")
