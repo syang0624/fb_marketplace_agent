@@ -24,7 +24,15 @@ try:
 except ImportError:  # keeps the pure normalize/parse/fixture/demo path stdlib-only
     requests = None
 
-from runpod.lib.schema import Listing
+try:
+    from runpod.lib.schema import Listing
+except ModuleNotFoundError as exc:
+    if exc.name != "runpod":
+        raise
+    try:
+        from .schema import Listing
+    except ImportError:
+        from schema import Listing
 
 BD_BASE = "https://api.brightdata.com"
 # BrightData Web Unlocker zone name (from your BrightData dashboard).

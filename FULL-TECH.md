@@ -1,4 +1,4 @@
-# Tech Spec: PedalBot (Hackathon Build — 1 Hour)
+# Tech Spec: MRI (Market Research Intelligence) — Hackathon Build, 1 Hour
 
 > An AI assistant that scans Facebook Marketplace bike listings to surface the top 3 deals and manages parallel negotiations with sellers so buyers get the best bike at the best price.
 
@@ -36,7 +36,7 @@ Everything goes through **one API route** with a `mode` field to keep it simple.
 ## Project Structure
 
 ```
-pedalbot/
+mri/
 ├── app/
 │   ├── layout.tsx          # Root layout, font, global styles
 │   ├── page.tsx            # Single page — all 3 steps live here
@@ -181,7 +181,7 @@ export async function POST(req: Request) {
 ### Onboarding
 
 ```
-You are PedalBot, a friendly bike expert helping someone find a used bike.
+You are MRI (Market Research Intelligence), a friendly bike expert helping someone find a used bike.
 
 Collect: bike type, frame size (or height), budget range, key preferences,
 and location/pickup radius. Ask ONE question at a time. Be conversational
@@ -442,7 +442,7 @@ That's it. No Meta API, no database URL, no auth.
 
 ### Minute 0–10: Scaffold
 
-- `npx create-next-app@latest pedalbot --typescript --tailwind --app`
+- `npx create-next-app@latest mri --typescript --tailwind --app`
 - Create folder structure (components/, lib/)
 - Write `lib/types.ts`, `lib/data.ts` (copy from this spec)
 - Write `lib/prompts.ts` (copy from this spec)
@@ -503,15 +503,15 @@ That's it. No Meta API, no database URL, no auth.
 
 ## Demo Script (What to Show)
 
-1. **Open the app.** "PedalBot helps you find the best used bike deals and negotiates for you."
+1. **Open the app.** "MRI (Market Research Intelligence) helps you find the best used bike deals and negotiates for you."
 2. **Type:** "I'm looking for a gravel bike for weekend rides, around $1,000"
 3. **AI asks follow-ups.** Answer naturally. Takes 30 seconds.
 4. **Profile confirmed.** App shows top 3 deals with scores and AI summaries.
 5. **Select all 3.** "Now I'm negotiating with all three sellers at once."
 6. **Show Tab 1 (Mike):** AI drafts opener. Approve. Mike replies. AI suggests counter. Approve. Mike accepts.
-7. **Show Tab 3 (Dave):** Short replies, then reveals crash history. "See — PedalBot caught that the fork was replaced. That's a red flag."
+7. **Show Tab 3 (Dave):** Short replies, then reveals crash history. "See — MRI (Market Research Intelligence) caught that the fork was replaced. That's a red flag."
 8. **Show Tab 2 (Sarah):** Firm on price, but offers accessories. "Different sellers, different strategies."
-9. **Wrap:** "In 2 minutes I found 3 deals, negotiated all of them in parallel, and caught a hidden crash history. Without PedalBot, that's 3 hours of scrolling and texting."
+9. **Wrap:** "In 2 minutes I found 3 deals, negotiated all of them in parallel, and caught a hidden crash history. Without MRI (Market Research Intelligence), that's 3 hours of scrolling and texting."
 
 ---
 

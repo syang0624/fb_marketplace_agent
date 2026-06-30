@@ -37,7 +37,7 @@ The demo target is **iPhones**. The backend exposes clean HTTP endpoints that a 
 
 ## Context
 
-The repo currently holds **PedalBot**, a Next.js/TypeScript demo for used-bike deals using
+The repo currently holds **MRI (Market Research Intelligence)**, a Next.js/TypeScript demo for used-bike deals using
 **GMI Cloud (Nemotron)** for inference and **ScrapeCreators** for Marketplace data. We keep
 that tree untouched and unused, and add a new, isolated Python backend under `runpod/`.
 

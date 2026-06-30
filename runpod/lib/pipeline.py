@@ -3,7 +3,15 @@ from __future__ import annotations
 
 from typing import Optional
 
-from runpod.lib.schema import Listing, ImageDefectReport, DealReport
+try:
+    from runpod.lib.schema import Listing, ImageDefectReport, DealReport
+except ModuleNotFoundError as exc:
+    if exc.name != "runpod":
+        raise
+    try:
+        from .schema import Listing, ImageDefectReport, DealReport
+    except ImportError:
+        from schema import Listing, ImageDefectReport, DealReport
 
 _GRADE_ORDER = ["excellent", "good", "fair", "poor"]
 

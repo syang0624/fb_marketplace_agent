@@ -1,4 +1,4 @@
-# Tech Spec: PedalBot v3 (Hackathon Build — Real Marketplace Search + Simulated Negotiation)
+# Tech Spec: MRI (Market Research Intelligence) v3 — Hackathon Build with Real Marketplace Search + Simulated Negotiation
 
 > An AI buying agent that searches Facebook Marketplace bike listings through ScrapeCreators, surfaces the top 3 deals, then **simulates autonomous negotiations with all three sellers in parallel** for the hackathon demo. The buyer sets the rules upfront, watches progress, and approves the final offers.
 
@@ -12,7 +12,7 @@ This version separates the product into two layers:
 2. **AI deal-selection layer** — the agent expands the buyer's search intent, deduplicates listings, enriches top candidates, scores deal quality, and picks the top 3.
 3. **Simulated negotiation layer** — because ScrapeCreators does not send or receive Facebook seller messages, the demo uses seller personas to simulate negotiation against the real listing cards.
 
-This keeps the demo honest: PedalBot really searches Marketplace, but it does not pretend to have official Facebook messaging access.
+This keeps the demo honest: MRI (Market Research Intelligence) really searches Marketplace, but it does not pretend to have official Facebook messaging access.
 
 ---
 
@@ -193,7 +193,7 @@ Use live search for Step 2, but keep negotiation simulated. The API returns list
 ## Project Structure
 
 ```text
-pedalbot/
+mri/
 ├── app/
 │   ├── layout.tsx
 │   ├── page.tsx
@@ -498,7 +498,7 @@ export async function GET(req: Request) {
 
 ## Search Agent (`lib/searchAgent.ts`)
 
-This is the new piece that makes PedalBot feel like a real search agent instead of a search bar.
+This is the new piece that makes MRI (Market Research Intelligence) feel like a real search agent instead of a search bar.
 
 ```typescript
 export async function findTopDeals(profile: BuyerProfile): Promise<RankedDeal[]> {
@@ -589,7 +589,7 @@ The LLM explains the ranking and fills in suggested first offer / max recommende
 ### Onboarding
 
 ```text
-You are PedalBot, a practical bike-buying agent helping someone find a used bike.
+You are MRI (Market Research Intelligence), a practical bike-buying agent helping someone find a used bike.
 You will search Marketplace and then negotiate in a simulated demo, so you need both search preferences and negotiation authority.
 
 Collect in this order, ONE question at a time:
@@ -611,7 +611,7 @@ When confirmed, respond with ONLY a JSON block with all fields from BuyerProfile
 ### Query Planner
 
 ```text
-You are the search-planning brain of PedalBot.
+You are the search-planning brain of MRI (Market Research Intelligence).
 Convert the buyer profile into a Marketplace search plan.
 
 Generate 3-6 query variants. Do not just repeat the buyer's words.
@@ -889,7 +889,7 @@ Three-lane layout, each lane is a `NegotiationLane`. Shared state at this level;
 
 Header copy should be honest:
 
-> "PedalBot is simulating negotiations against the live listings you selected."
+> "MRI (Market Research Intelligence) is simulating negotiations against the live listings you selected."
 
 Do not say it is messaging real Facebook sellers.
 
@@ -910,7 +910,7 @@ Pill row: `Outreach → Price → Condition → Counter → Logistics → Final`
 
 ### `ChatDrawer.tsx`
 
-Slides out from the right. Shows message history including `agent_note` entries, styled distinctly. Has a "Take over" button that flips `neg.userTookOver = true` and gives the buyer a text input. Buyer can hit "Return control to PedalBot" to resume autonomous mode.
+Slides out from the right. Shows message history including `agent_note` entries, styled distinctly. Has a "Take over" button that flips `neg.userTookOver = true` and gives the buyer a text input. Buyer can hit "Return control to MRI (Market Research Intelligence)" to resume autonomous mode.
 
 ### `FinalOffersReview.tsx`
 
@@ -1010,7 +1010,7 @@ No Anthropic or OpenAI API key needed — all inference goes through Nemotron on
 
 ### Minute 0-10: Scaffold
 
-- `npx create-next-app@latest pedalbot --typescript --tailwind --app`
+- `npx create-next-app@latest mri --typescript --tailwind --app`
 - Folder structure, dependencies, `.env.local`
 - Copy `lib/types.ts`, `lib/prompts.ts`, `lib/data.ts`
 - Set up GMI Cloud env vars and `SCRAPECREATORS_API_KEY`
@@ -1094,18 +1094,18 @@ This table is the cleanest way to avoid overclaiming. The demo has real search, 
 
 ## Demo Script
 
-1. **Open the app.** "PedalBot is an AI buying agent for Facebook Marketplace. It searches live listings, finds the best bike deals, and simulates how it would negotiate with sellers."
+1. **Open the app.** "MRI (Market Research Intelligence) is an AI buying agent for Facebook Marketplace. It searches live listings, finds the best bike deals, and simulates how it would negotiate with sellers."
 2. **Type:** "Looking for a gravel bike for weekend rides, around $1,000, near San Francisco."
 3. **AI asks follow-ups** — bike type, size, budget, search radius, walk-away price, auto-accept threshold, deadline, meet preferences, non-negotiables. Pause on the non-negotiables question: "I'll say no crash history — that's going to matter later."
 4. **Profile confirmed.** SearchProgress appears: "Expanding search terms," "Searching Marketplace," "Removing duplicates," "Fetching details," "Ranking deals."
 5. **Top 3 live deals appear.** Point to the source badge: "These listings came from the Marketplace data provider, not from a static demo file."
-6. **Confirm all 3.** "Now PedalBot creates simulated seller personas from those listings and negotiates with all three at the same time."
+6. **Confirm all 3.** "Now MRI (Market Research Intelligence) creates simulated seller personas from those listings and negotiates with all three at the same time."
 7. **Dashboard view.** Three lanes tick through stages. Point at one lane: "The agent is pushing price down." Point at another: "This seller is firm, so the agent is trying to get accessories included." Point at the risk lane: "Here it asked directly about crash history and walked away."
 8. **Click a lane → drawer opens.** Show message history and agent reasoning notes.
 9. **All three reach terminal.** Auto-advance to Final Offers.
 10. **Final Offers screen.** Show two final offers and one withdrawn card. Emphasize final price, meet time/place, extras, and why the agent walked away.
 11. **Click Modify.** Change meet time. Watch the simulated confirmation message.
-12. **Click Accept.** Done. "PedalBot turned a vague buying request into live search, ranked deals, negotiation strategy, and a final decision."
+12. **Click Accept.** Done. "MRI (Market Research Intelligence) turned a vague buying request into live search, ranked deals, negotiation strategy, and a final decision."
 
 ---
 
@@ -1132,6 +1132,6 @@ The stronger demo is not "we scrape Facebook." That sounds fragile and legally m
 
 The stronger demo is:
 
-> "PedalBot is a secondhand buying agent. It turns a vague request into live marketplace search, deal ranking, scam/risk filtering, and negotiation strategy."
+> "MRI (Market Research Intelligence) is a secondhand buying agent. It turns a vague request into live marketplace search, deal ranking, scam/risk filtering, and negotiation strategy."
 
 ScrapeCreators is just the data pipe. The agent intelligence is query planning, deduplication, deal scoring, risk detection, and autonomous negotiation behavior.

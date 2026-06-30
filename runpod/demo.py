@@ -7,9 +7,16 @@ from __future__ import annotations
 
 import json
 
-from runpod.lib.brightdata import load_fixture_listings
-from runpod.lib.schema import Defect, ImageDefectReport, DealReport, to_jsonable
-from runpod.lib.pipeline import assemble_deal_report
+try:
+    from runpod.lib.brightdata import load_fixture_listings
+    from runpod.lib.schema import Defect, ImageDefectReport, DealReport, to_jsonable
+    from runpod.lib.pipeline import assemble_deal_report
+except ModuleNotFoundError as exc:
+    if exc.name != "runpod":
+        raise
+    from lib.brightdata import load_fixture_listings
+    from lib.schema import Defect, ImageDefectReport, DealReport, to_jsonable
+    from lib.pipeline import assemble_deal_report
 
 
 def _stub_report_for(listing) -> ImageDefectReport:

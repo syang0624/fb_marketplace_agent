@@ -5,7 +5,15 @@ import json
 import re
 from typing import Any
 
-from runpod.lib.schema import Defect, ImageDefectReport
+try:
+    from runpod.lib.schema import Defect, ImageDefectReport
+except ModuleNotFoundError as exc:
+    if exc.name != "runpod":
+        raise
+    try:
+        from .schema import Defect, ImageDefectReport
+    except ImportError:
+        from schema import Defect, ImageDefectReport
 
 _VALID_SEVERITY = {"minor", "moderate", "severe"}
 
