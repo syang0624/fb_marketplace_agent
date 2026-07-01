@@ -30,7 +30,7 @@ export const DEFAULT_COORDS = { lat: 37.7749, lng: -122.4194 };
 function toNumber(value: unknown): number | undefined {
   if (typeof value === "number" && !Number.isNaN(value)) return value;
   if (typeof value === "string") {
-    const cleaned = value.replace(/[^0-9.]/g, "");
+    const cleaned = value.replace(/[^0-9.-]/g, "");
     if (cleaned) {
       const n = parseFloat(cleaned);
       if (!Number.isNaN(n)) return n;
@@ -137,6 +137,10 @@ function extractListingArray(data: unknown): Record<string, unknown>[] {
   return [];
 }
 
+function isValidCoordinate(lat: number, lng: number): boolean {
+  return lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180;
+}
+
 export function normalizeRawListing(item: Record<string, unknown>): MarketplaceRawListing {
   // Unwrap GraphQL-style { node: {...} } edges.
   const node =
@@ -198,7 +202,7 @@ export async function resolveLocation(
 
     const lat = toNumber(pick(data, ["lat", "latitude"]));
     const lng = toNumber(pick(data, ["lng", "lon", "longitude"]));
-    if (lat !== undefined && lng !== undefined) return { lat, lng };
+    if (lat !== undefined && lng !== undefined && isValidCoordinate(lat, lng)) return { lat, lng };
 
     // Look one level deeper for a coordinates-bearing object.
     const arr = extractListingArray(data);
@@ -206,7 +210,9 @@ export async function resolveLocation(
       const first = arr[0];
       const flat = toNumber(pick(first, ["lat", "latitude"]));
       const flng = toNumber(pick(first, ["lng", "lon", "longitude"]));
-      if (flat !== undefined && flng !== undefined) return { lat: flat, lng: flng };
+      if (flat !== undefined && flng !== undefined && isValidCoordinate(flat, flng)) {
+        return { lat: flat, lng: flng };
+      }
     }
   } catch {
     // fall through to default

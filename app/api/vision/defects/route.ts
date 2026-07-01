@@ -1,4 +1,5 @@
 import { detectRunpodDefects } from "@/lib/server/runpodBackend";
+import { parseJsonResponse, responseDebugInfo } from "@/lib/server/httpResponse";
 
 export async function POST(req: Request) {
   const body = (await req.json()) as { image_urls?: string[]; imageUrls?: string[] };
@@ -16,11 +17,14 @@ export async function POST(req: Request) {
     );
   }
 
-  try {
-    const data = await runpodResponse.json();
-    return Response.json(data, { status: runpodResponse.status });
-  } catch (err) {
-    console.error("[/api/vision/defects] RunPod response parse error:", err);
-    return Response.json({ error: "RunPod vision response was not valid JSON", reports: [] }, { status: 502 });
+  const parsed = await parseJsonResponse(runpodResponse);
+  if (parsed.ok) {
+    return Response.json(parsed.data ?? { reports: [] }, { status: runpodResponse.status });
   }
+
+  console.error(
+    "[/api/vision/defects] RunPod returned non-JSON response:",
+    responseDebugInfo(runpodResponse, parsed)
+  );
+  return Response.json({ error: "RunPod vision response was not valid JSON", reports: [] }, { status: 502 });
 }

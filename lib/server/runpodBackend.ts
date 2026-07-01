@@ -9,6 +9,18 @@ function joinUrl(base: string, path: string): string {
   return `${base.replace(/\/+$/, "")}/${path.replace(/^\/+/, "")}`;
 }
 
+function hasPathSegment(base: string, segment: string): boolean {
+  try {
+    return new URL(base).pathname.split("/").filter(Boolean).includes(segment);
+  } catch {
+    return base.split("/").filter(Boolean).includes(segment);
+  }
+}
+
+function endpointPath(baseUrl: string, prefix: "scraper_ep" | "vision_ep", path: string): string {
+  return hasPathSegment(baseUrl, prefix) ? path : `/${prefix}${path}`;
+}
+
 const RUNPOD_API_KEY = process.env.RUNPOD_API_KEY || "";
 
 // RunPod serverless endpoints can cold-start or stall on a slow BrightData
@@ -53,18 +65,18 @@ export async function searchRunpodListings(body: {
   location?: string;
   limit?: number;
 }): Promise<Response | null> {
-  return postJson(SCRAPER_BASE_URL, "/search", body);
+  return postJson(SCRAPER_BASE_URL, endpointPath(SCRAPER_BASE_URL, "scraper_ep", "/search"), body);
 }
 
 export async function getRunpodListings(body: {
   url?: string;
   urls?: string[];
 }): Promise<Response | null> {
-  return postJson(SCRAPER_BASE_URL, "/listing", body);
+  return postJson(SCRAPER_BASE_URL, endpointPath(SCRAPER_BASE_URL, "scraper_ep", "/listing"), body);
 }
 
 export async function detectRunpodDefects(body: {
   image_urls: string[];
 }): Promise<Response | null> {
-  return postJson(VISION_BASE_URL, "/defects", body);
+  return postJson(VISION_BASE_URL, endpointPath(VISION_BASE_URL, "vision_ep", "/defects"), body);
 }

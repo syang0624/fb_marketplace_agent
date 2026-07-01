@@ -2,6 +2,7 @@
 // Fetches item details by Marketplace item id or listing URL.
 
 import { getRunpodListings } from "@/lib/server/runpodBackend";
+import { parseJsonResponse, responseDebugInfo } from "@/lib/server/httpResponse";
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
@@ -15,12 +16,16 @@ export async function GET(req: Request) {
   if (url) {
     const runpodResponse = await getRunpodListings({ url, urls: [url] });
     if (runpodResponse) {
-      try {
-        const data = await runpodResponse.json();
+      const parsed = await parseJsonResponse(runpodResponse);
+      if (parsed.ok) {
+        const data = parsed.data ?? {};
         if (runpodResponse.ok) return Response.json(data, { status: runpodResponse.status });
         console.error("[/api/marketplace/item] RunPod error:", data);
-      } catch (err) {
-        console.error("[/api/marketplace/item] RunPod response parse error:", err);
+      } else {
+        console.error(
+          "[/api/marketplace/item] RunPod returned non-JSON response:",
+          responseDebugInfo(runpodResponse, parsed)
+        );
       }
     }
   }
@@ -44,8 +49,14 @@ export async function GET(req: Request) {
       headers: { "x-api-key": process.env.SCRAPECREATORS_API_KEY },
       cache: "no-store",
     });
-    const data = await response.json();
-    return Response.json(data, { status: response.status });
+    const parsed = await parseJsonResponse(response);
+    if (parsed.ok) return Response.json(parsed.data ?? {}, { status: response.status });
+
+    console.error(
+      "[/api/marketplace/item] ScrapeCreators returned non-JSON response:",
+      responseDebugInfo(response, parsed)
+    );
+    return Response.json({ error: "Upstream item response was not valid JSON" }, { status: 502 });
   } catch (err) {
     console.error("[/api/marketplace/item] upstream error:", err);
     return Response.json({ error: "Upstream item lookup failed" }, { status: 502 });

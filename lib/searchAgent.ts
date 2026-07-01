@@ -139,7 +139,17 @@ async function enrichListing(listing: Listing): Promise<Listing> {
     price: detail.price ?? listing.price,
   };
   merged.fairValue = estimateFairValue(merged.price);
-  merged.riskFlags = detectRiskFlags({ ...detail, raw: detail.raw });
+  // Judge flags on the merged data actually shown on the card. The item-detail
+  // scrape often lacks the photo/description the search result already carried,
+  // so flagging off `detail` alone falsely stamps "no photo" / "very short
+  // description" on listings that visibly have both.
+  merged.riskFlags = detectRiskFlags({
+    ...detail,
+    image: merged.image,
+    images: merged.images,
+    description: merged.description,
+    raw: detail.raw,
+  });
   // Use the (usually longer) detail description as the specs seed.
   merged.specs = merged.description.slice(0, 160);
   return merged;
